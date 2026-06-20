@@ -191,9 +191,23 @@ body {
 }
 
 .mathjax-display mjx-container,
+.mathjax-inline mjx-container,
 .matrix-preview mjx-container,
 .polynomial-preview mjx-container {
   margin: 0.5rem 0 !important;
+}
+
+.mathjax-inline {
+  display: inline;
+}
+
+.mathjax-inline mjx-container {
+  display: inline !important;
+  margin: 0 !important;
+}
+
+.data-table th .mathjax-inline {
+  vertical-align: middle;
 }
 
 .matrix-preview.compact mjx-container {

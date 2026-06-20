@@ -52,24 +52,25 @@ export default function JordanPage() {
               </ResultBlock>
               <ResultBlock title="特征值分析">
                 <PolynomialPreview
-                  expr={r.characteristic_polynomial_latex || r.characteristic_polynomial}
+                  expr={r.characteristic_polynomial}
+                  latex={r.characteristic_polynomial_latex}
                   label={'\\det(\\lambda I - A)'}
                 />
                 {r.eigenvalues?.map((ev, i) => (
                   <MathLine key={i} tex={`${eigenvalueLineLatex(ev)},\\ t=${ev.nilpotent_index}`} />
                 ))}
               </ResultBlock>
-              <ResultBlock title="dim ker(B^k) 表格">
+              <ResultBlock title="幂零矩阵分析">
                 {Object.entries(r.nilpotent_tables || {}).map(([lam, data]) => (
                   <div key={lam}>
                     <MathLine tex={`\\lambda = ${data.eigenvalue_latex || lam}`} />
-                    <MatrixPreview matrix={data.B_matrix} label={`B=A-\\lambda I`} />
+                    <MatrixPreview matrix={data.B_matrix} label={'B = A - \\lambda I'} />
                     <table className="data-table">
                       <thead>
                         <tr>
                           <th><MathLine inline tex={'k'} /></th>
                           <th><MathLine inline tex={'\\dim\\ker(B^{k})'} /></th>
-                          <th><MathLine inline tex={'d_{k} - d_{k-1}'} /></th>
+                          <th><MathLine inline tex={'d_k - d_{k-1}'} /></th>
                           <th>Jordan 块信息</th>
                         </tr>
                       </thead>
@@ -88,11 +89,11 @@ export default function JordanPage() {
                 ))}
               </ResultBlock>
               <ResultBlock title="Jordan 标准型">
-                <p>约定: {r.convention}</p>
+                <MathLine tex={'\\text{约定：上 Jordan 块}'} />
                 <MatrixPreview matrix={r.P} label="P" />
                 <MatrixPreview matrix={r.J} label="J" />
                 <MathLine tex={r.verification_exact
-                  ? 'P^{-1}AP = J \\text{（精确验证）}'
+                  ? 'P^{-1}AP = J \\quad (\\text{精确验证})'
                   : valueToLatex('\\text{验证误差}', r.verification_error)} />
               </ResultBlock>
               <StepBlock steps={result.steps} />

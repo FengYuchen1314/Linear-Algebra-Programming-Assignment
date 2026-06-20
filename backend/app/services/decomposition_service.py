@@ -69,6 +69,7 @@ def lu_decomposition(A):
         steps.append({
             "title": "PLU 分解",
             "content": f"{'需要' if needs_perm else '不需要'}行交换",
+            "latex": f"P={latex_matrix(P.tolist())},\\quad L={latex_matrix(L.tolist())},\\quad U={latex_matrix(U.tolist())}",
         })
 
         PA = P * sm

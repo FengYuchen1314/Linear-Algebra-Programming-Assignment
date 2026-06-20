@@ -95,9 +95,11 @@ def compute_properties(A):
             "content": f"det(λI-A) = {char_poly.as_expr()}",
             "latex": f"\\det(\\lambda I - A)={sp.latex(char_poly.as_expr())}",
         })
+        diag_tex = "\\text{是}" if is_diag else "\\text{否}"
         steps.append({
             "title": "可对角化判定",
             "content": reason,
+            "latex": f"\\text{{可对角化：}}{diag_tex}",
         })
 
         eigvals = [a["eigenvalue"] for a in eigen_analysis for _ in range(a["algebraic_multiplicity"])]

@@ -15,9 +15,9 @@ export function numberToLatex(val) {
       if (Math.abs(imNum) < 1e-10) return reTex;
       const imTex = numberToLatex(Math.abs(imNum));
       if (Math.abs(parseNumber(re)) < 1e-10) {
-        return imNum >= 0 ? `${imTex}i` : `-${imTex}i`;
+        return imNum >= 0 ? `${imTex}\\mathrm{i}` : `-${imTex}\\mathrm{i}`;
       }
-      return `${reTex}${imNum >= 0 ? '+' : '-'}${imTex}i`;
+      return `${reTex}${imNum >= 0 ? '+' : '-'}${imTex}\\mathrm{i}`;
     }
   }
   if (typeof val === 'string' && val.includes('/')) {
@@ -36,15 +36,27 @@ export function parseNumber(val) {
   return Number(val);
 }
 
+/** Convert SymPy-style strings to LaTeX. Pass through strings that already contain TeX. */
 export function exprToLatex(expr) {
   if (expr == null || expr === '') return '';
-  const s = String(expr);
+  const s = String(expr).trim();
   if (s.includes('\\')) return s;
-  return s
+
+  let out = s
     .replace(/\*\*/g, '^')
-    .replace(/\blambda\b/g, '\\lambda')
-    .replace(/\^(\w+)/g, (_, p) => `^{${p}}`)
-    .replace(/\*/g, ' \\cdot ');
+    .replace(/\blambda\b/g, '\\lambda');
+
+  out = out.replace(/\^\(([^)]+)\)/g, '^{$1}');
+  out = out.replace(/\^([a-zA-Z_][a-zA-Z0-9_]*|\d+)/g, '^{$1}');
+  out = out.replace(/\bsqrt\(([^)]+)\)/g, '\\sqrt{$1}');
+  out = out.replace(/\*/g, ' \\cdot ');
+
+  return out;
+}
+
+/** Normalize subscripts in identifiers like D_1 -> D_{1}. */
+export function subscriptLatex(name) {
+  return String(name).replace(/([A-Za-z])_(\d+)/g, '$1_{$2}');
 }
 
 export function matrixToLatex(matrix) {
@@ -76,4 +88,9 @@ export function rootApproxLatex(root) {
 export function valueToLatex(label, value, suffix = '') {
   const body = typeof value === 'string' && value.includes('\\') ? value : numberToLatex(value);
   return `${label} = ${body}${suffix}`;
+}
+
+export function pickLatex(latex, fallback) {
+  if (latex != null && latex !== '') return latex;
+  return exprToLatex(fallback);
 }

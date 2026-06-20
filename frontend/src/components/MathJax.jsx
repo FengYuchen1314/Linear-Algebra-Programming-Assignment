@@ -39,5 +39,7 @@ export default function MathJaxDisplay({ tex, inline = false, className = '' }) 
 
   if (tex == null || tex === '') return null;
 
-  return <div ref={ref} className={`mathjax-display ${className}`.trim()} />;
+  const Tag = inline ? 'span' : 'div';
+  const modeClass = inline ? 'mathjax-inline' : 'mathjax-display';
+  return <Tag ref={ref} className={`${modeClass} ${className}`.trim()} />;
 }

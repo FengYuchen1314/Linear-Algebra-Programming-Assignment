@@ -6,7 +6,7 @@ from sympy.polys.domains import QQ
 from sympy.polys.matrices import DomainMatrix
 from sympy.polys.matrices.normalforms import smith_normal_form, invariant_factors
 
-from app.utils.formatter import format_number, matrix_to_list, to_exact_matrix, round_complex
+from app.utils.formatter import format_number, matrix_to_list, to_exact_matrix, round_complex, poly_to_latex
 from app.utils.latex import latex_matrix
 from app.services.jordan_service import _numeric_jordan
 
@@ -36,14 +36,21 @@ def _factorize_elementary_divisors(invariant_factor_list):
             continue
         facs = sp.factor_list(expr, lam)
         for base, exp in facs[1]:
-            elem_str = str(base ** exp)
-            elementary.append({"factor": elem_str, "base": str(base), "exponent": exp})
+            elem_expr = sp.expand(base ** exp)
+            elem_str = str(elem_expr)
+            elementary.append({
+                "factor": elem_str,
+                "factor_latex": sp.latex(elem_expr),
+                "base": str(base),
+                "exponent": exp,
+            })
             root = None
             base_poly = sp.Poly(base, lam) if not isinstance(base, sp.Poly) else base
             if base_poly.degree() == 1:
                 root = -base_poly.all_coeffs()[1] / base_poly.all_coeffs()[0]
             jordan_blocks.append({
                 "elementary_divisor": elem_str,
+                "elementary_divisor_latex": sp.latex(elem_expr),
                 "eigenvalue": format_number(complex(root.evalf())) if root is not None else str(base),
                 "block_size": exp,
             })
@@ -133,30 +140,48 @@ def compute_lambda_smith(A):
         P, J = sm.jordan_form()
         jordan_J_list = matrix_to_list(J)
 
+    inv_latex = [poly_to_latex(f) for f in inv_exprs]
+    det_factors_latex = {
+        k: poly_to_latex(sp.sympify(v)) if v not in ("0", "1") else v
+        for k, v in det_factors.items()
+    }
+
     steps.append({
         "title": "不变因子",
         "content": f"d_k(λ): {[str(f) for f in inv_exprs]}",
+        "latex": ",\\quad ".join(
+            f"d_{{{i + 1}}}(\\lambda)={poly_to_latex(f)}" for i, f in enumerate(inv_exprs)
+        ),
     })
     steps.append({
         "title": "初等因子组",
         "content": str([e["factor"] for e in elementary]),
+        "latex": ",\\quad ".join(e["factor_latex"] for e in elementary) if elementary else "1",
     })
     steps.append({
         "title": "Jordan 块（由初等因子）",
         "content": str(jordan_blocks),
+        "latex": ",\\quad ".join(
+            f"{b['elementary_divisor_latex']} \\rightarrow J_{{{b['block_size']}}}"
+            for b in jordan_blocks
+        ) if jordan_blocks else "",
     })
 
     result = {
         "lambda_I_minus_A": matrix_to_list(lambda_I_minus_A),
         "smith_form": matrix_to_list(snf_matrix),
         "determinant_factors": det_factors,
+        "determinant_factors_latex": det_factors_latex,
         "invariant_factors": [str(f) for f in inv_exprs],
+        "invariant_factors_latex": inv_latex,
         "elementary_divisors": elementary,
         "jordan_blocks_from_elementary": jordan_blocks,
         "jordan_form_J": jordan_J_list,
         "is_diagonalizable": is_diag,
         "minimal_polynomial": str(min_poly),
+        "minimal_polynomial_latex": poly_to_latex(min_poly),
         "characteristic_polynomial": str(char_poly.as_expr()),
+        "characteristic_polynomial_latex": poly_to_latex(char_poly.as_expr()),
     }
 
     return result, steps, warnings

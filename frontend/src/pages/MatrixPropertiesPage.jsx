@@ -52,7 +52,7 @@ export default function MatrixPropertiesPage() {
                   <>
                     <MathLine tex={`\\det(A)=${r.det_latex || r.det},\\ \\mathrm{tr}(A)=${r.trace_latex || r.trace}`} />
                     <MathLine tex={r.is_invertible ? 'A \\text{ 可逆}' : 'A \\text{ 不可逆}'} />
-                    {r.inverse && <MatrixPreview matrix={r.inverse} label="A^{-1}" />}
+                    {r.inverse && <MatrixPreview matrix={r.inverse} label={'A^{-1}'} />}
                     <PolynomialPreview
                       expr={r.characteristic_polynomial_latex || r.characteristic_polynomial}
                       label={'\\det(\\lambda I - A)'}
@@ -61,7 +61,7 @@ export default function MatrixPropertiesPage() {
                     {r.eigenvalues?.map((ev, i) => (
                       <MathLine key={i} tex={eigenvalueLineLatex(ev)} />
                     ))}
-                    <MathLine tex={`\\text{可对角化：${r.is_diagonalizable ? '是' : '否'}}`} />
+                    <MathLine tex={r.is_diagonalizable ? '\\text{可对角化：是}' : '\\text{可对角化：否}'} />
                     <p>{r.diagonalizable_reason}</p>
                   </>
                 ) : (

@@ -72,10 +72,10 @@ export default function DecompositionPage() {
                 {r.L && <MatrixPreview matrix={r.L} label="L" />}
                 {r.U && !r.Sigma && <MatrixPreview matrix={r.U} label="U" />}
                 {r.D && <MatrixPreview matrix={r.D} label="D" />}
-                {r.U1 && <MatrixPreview matrix={r.U1} label="U_1" />}
+                {r.U1 && <MatrixPreview matrix={r.U1} label={'U_{1}'} />}
                 {r.Sigma && <MatrixPreview matrix={r.U} label="U" />}
                 {r.Sigma && <MatrixPreview matrix={r.Sigma} label={'\\Sigma'} />}
-                {r.V_transpose && <MatrixPreview matrix={r.V_transpose} label="V^T" />}
+                {r.V_transpose && <MatrixPreview matrix={r.V_transpose} label={'V^{\\mathsf T}'} />}
                 {r.singular_values && (
                   <MathLine tex={`\\sigma_i \\in \\{${r.singular_values.map((s) => numberToLatex(s)).join(',\\ ')}\\}`} />
                 )}
