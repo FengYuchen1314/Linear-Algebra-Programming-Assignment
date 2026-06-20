@@ -1,3 +1,4 @@
+import { motion } from 'framer-motion';
 import { useState, useEffect, useMemo } from 'react';
 import { api } from '../api/client';
 import PolynomialPreview from './PolynomialPreview';
@@ -5,6 +6,8 @@ import { SelectedBanner } from './ResultBlock';
 import Modal from './ui/Modal';
 import Button from './ui/Button';
 import GenerateStatus from './ui/GenerateStatus';
+import LibraryCard from './ui/LibraryCard';
+import { fadeUp } from '../motion/presets';
 
 export default function PolynomialSourceSelector({ onSelect, onConfirmAndAnalyze, selected }) {
   const [libraryOpen, setLibraryOpen] = useState(false);
@@ -66,7 +69,13 @@ export default function PolynomialSourceSelector({ onSelect, onConfirmAndAnalyze
   const canGenerate = requirement.trim().length > 0;
 
   return (
-    <div className="source-selector">
+    <motion.div
+      className="source-selector"
+      variants={fadeUp}
+      initial="hidden"
+      animate="visible"
+      transition={{ ...fadeUp.visible.transition, delay: 0.02 }}
+    >
       <div className="source-selector-header">
         <h3 className="text-h4">选择多项式</h3>
         <p className="text-body">从多项式库选取，或使用 DeepSeek 根据描述生成</p>
@@ -145,7 +154,7 @@ export default function PolynomialSourceSelector({ onSelect, onConfirmAndAnalyze
           </div>
         </div>
       </Modal>
-    </div>
+    </motion.div>
   );
 }
 
@@ -188,20 +197,17 @@ function PolynomialLibrarySelector({ onSelect, selected }) {
       ) : (
         <div className="library-grid library-grid--modal">
           {filtered.map((p) => (
-            <div
+            <LibraryCard
               key={p.id}
-              role="button"
-              tabIndex={0}
-              className={`library-card ${selected?.polynomial_id === p.id ? 'selected' : ''}`}
-              onClick={() => onSelect({ source: 'library', polynomial_id: p.id, item: p, polynomial: p.polynomial })}
-              onKeyDown={(e) => e.key === 'Enter' && onSelect({ source: 'library', polynomial_id: p.id, item: p, polynomial: p.polynomial })}
+              selected={selected?.polynomial_id === p.id}
+              onSelect={() => onSelect({ source: 'library', polynomial_id: p.id, item: p, polynomial: p.polynomial })}
             >
               <h4 className="text-h4">{p.name}</h4>
               <p className="meta text-label">次数 {p.degree}</p>
               <PolynomialPreview expr={p.polynomial} label="f(x)" />
               <div className="tags">{p.tags?.map((t) => <span key={t} className="tag">{t}</span>)}</div>
               <p className="desc text-muted">{p.description}</p>
-            </div>
+            </LibraryCard>
           ))}
         </div>
       )}

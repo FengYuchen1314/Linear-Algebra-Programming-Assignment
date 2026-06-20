@@ -1,3 +1,6 @@
+import { motion, useReducedMotion } from 'framer-motion';
+import { pressableHover, pressableTap, springSnappy } from '../../motion/presets';
+
 export default function Button({
   children,
   variant = 'primary',
@@ -9,6 +12,8 @@ export default function Button({
   type = 'button',
   ...props
 }) {
+  const reduceMotion = useReducedMotion();
+
   const resolved = variant === 'filled' ? 'primary'
     : variant === 'tonal' ? 'secondary'
       : variant === 'outlined' ? 'outline'
@@ -26,17 +31,20 @@ export default function Button({
     .join(' ');
 
   return (
-    <button
+    <motion.button
       type={type}
       className={cls}
       disabled={disabled || loading}
       aria-busy={loading || undefined}
+      whileHover={disabled || loading ? undefined : pressableHover(reduceMotion)}
+      whileTap={disabled || loading ? undefined : pressableTap(reduceMotion)}
+      transition={springSnappy}
       {...props}
     >
       {loading ? <span className="btn__spinner" aria-hidden /> : icon && (
         <span className="btn__icon" aria-hidden>{icon}</span>
       )}
       <span className="btn__label">{loading ? '计算中…' : children}</span>
-    </button>
+    </motion.button>
   );
 }

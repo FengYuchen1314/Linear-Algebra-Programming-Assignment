@@ -1,13 +1,9 @@
-import { Routes, Route, NavLink } from 'react-router-dom';
-import SturmPage from './pages/SturmPage';
-import MatrixPropertiesPage from './pages/MatrixPropertiesPage';
-import DecompositionPage from './pages/DecompositionPage';
-import JordanPage from './pages/JordanPage';
-import LambdaSmithPage from './pages/LambdaSmithPage';
 import {
   DisplayPrecisionProvider,
   useDisplayPrecision,
 } from './context/DisplayPrecisionContext';
+import FeatureNav from './components/ui/FeatureNav';
+import AnimatedRoutes from './components/ui/AnimatedRoutes';
 import {
   IconSturm,
   IconMatrix,
@@ -53,45 +49,16 @@ function AppToolbar() {
         <div className="app-toolbar__logo">LA</div>
         <div>
           <span className="app-toolbar__title">Linear Algebra</span>
-          <p className="app-toolbar__subtitle text-muted">符号计算工作台</p>
+          <p className="app-toolbar__subtitle text-muted">fyc编程作业</p>
         </div>
       </div>
 
-      <nav className="feature-nav" aria-label="功能选择">
-        <div className="feature-nav__pill glass-pill">
-          {navItems.map(({ path, label, Icon }) => (
-            <NavLink
-              key={path}
-              to={path}
-              end={path === '/'}
-              className={({ isActive }) => `feature-nav__tab${isActive ? ' is-active' : ''}`}
-            >
-              <Icon aria-hidden />
-              <span>{label}</span>
-            </NavLink>
-          ))}
-        </div>
-      </nav>
+      <FeatureNav items={navItems} />
 
       <div className="app-toolbar__utility glass-pill">
         <DisplayPrecisionControl />
       </div>
     </header>
-  );
-}
-
-function AppRoutes() {
-  useDisplayPrecision();
-  return (
-    <main className="app-main">
-      <Routes>
-        <Route path="/" element={<SturmPage />} />
-        <Route path="/matrix-properties" element={<MatrixPropertiesPage />} />
-        <Route path="/decomposition" element={<DecompositionPage />} />
-        <Route path="/jordan" element={<JordanPage />} />
-        <Route path="/lambda-smith" element={<LambdaSmithPage />} />
-      </Routes>
-    </main>
   );
 }
 
@@ -101,7 +68,7 @@ export default function App() {
       <div className="app">
         <div className="app-shell">
           <AppToolbar />
-          <AppRoutes />
+          <AnimatedRoutes />
         </div>
       </div>
     </DisplayPrecisionProvider>

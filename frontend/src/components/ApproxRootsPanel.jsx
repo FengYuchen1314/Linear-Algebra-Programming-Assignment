@@ -1,5 +1,14 @@
+import { motion } from 'framer-motion';
 import MathLine from './MathLine';
 import { intervalToLatex, numberToLatex } from '../utils/latex';
+import { revealItem } from '../motion/presets';
+
+const rootGridVariants = {
+  hidden: {},
+  visible: {
+    transition: { staggerChildren: 0.05, delayChildren: 0.06 },
+  },
+};
 
 export default function ApproxRootsPanel({ roots, precision }) {
   if (!roots?.length) {
@@ -9,14 +18,28 @@ export default function ApproxRootsPanel({ roots, precision }) {
   return (
     <div className="approx-roots-panel">
       {precision != null && (
-        <div className="approx-roots-meta">
+        <motion.div
+          className="approx-roots-meta"
+          variants={revealItem}
+          initial="hidden"
+          animate="visible"
+        >
           <span className="roots-meta-label">求根精度</span>
           <MathLine inline tex={`\\varepsilon = ${numberToLatex(precision)}`} />
-        </div>
+        </motion.div>
       )}
-      <div className="roots-grid">
+      <motion.div
+        className="roots-grid"
+        variants={rootGridVariants}
+        initial="hidden"
+        animate="visible"
+      >
         {roots.map((root, i) => (
-          <div key={i} className="root-card">
+          <motion.div
+            key={i}
+            className="root-card"
+            variants={revealItem}
+          >
             <div className="root-card-index">#{i + 1}</div>
             <div className="root-card-section">
               <span className="root-card-label">隔离区间</span>
@@ -31,9 +54,9 @@ export default function ApproxRootsPanel({ roots, precision }) {
                 <MathLine tex={`x \\approx ${numberToLatex(root.approx_root)}`} />
               </div>
             </div>
-          </div>
+          </motion.div>
         ))}
-      </div>
+      </motion.div>
     </div>
   );
 }

@@ -1,10 +1,17 @@
+import { motion } from 'framer-motion';
 import MathJaxDisplay from './MathJax';
 import { IconSteps } from './ui/Icons';
+import { revealItem } from '../motion/presets';
 
 export default function StepBlock({ steps }) {
   if (!steps?.length) return null;
   return (
-    <section className="card card--muted steps-section">
+    <motion.section
+      className="card card--muted steps-section"
+      variants={revealItem}
+      initial="hidden"
+      animate="visible"
+    >
       <header className="steps-section-header">
         <IconSteps aria-hidden />
         <h3 className="text-h4">计算步骤</h3>
@@ -26,6 +33,6 @@ export default function StepBlock({ steps }) {
           </li>
         ))}
       </ol>
-    </section>
+    </motion.section>
   );
 }

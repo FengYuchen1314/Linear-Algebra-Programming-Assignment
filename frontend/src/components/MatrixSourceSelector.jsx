@@ -1,3 +1,4 @@
+import { motion } from 'framer-motion';
 import { useState, useEffect, useMemo } from 'react';
 import { api } from '../api/client';
 import MatrixPreview from './MatrixPreview';
@@ -5,6 +6,9 @@ import { SelectedBanner } from './ResultBlock';
 import Modal from './ui/Modal';
 import Button from './ui/Button';
 import GenerateStatus from './ui/GenerateStatus';
+import SegmentTabs from './ui/SegmentTabs';
+import LibraryCard from './ui/LibraryCard';
+import { fadeUp } from '../motion/presets';
 
 export { MatrixPreview };
 
@@ -75,7 +79,13 @@ export default function MatrixSourceSelector({
   const canGenerate = requirement.trim().length > 0;
 
   return (
-    <div className="source-selector">
+    <motion.div
+      className="source-selector"
+      variants={fadeUp}
+      initial="hidden"
+      animate="visible"
+      transition={{ ...fadeUp.visible.transition, delay: 0.02 }}
+    >
       <div className="source-selector-header">
         <h3 className="text-h4">选择矩阵</h3>
         <p className="text-body">从矩阵库选取，或使用 DeepSeek 根据描述生成</p>
@@ -155,7 +165,7 @@ export default function MatrixSourceSelector({
           </div>
         </div>
       </Modal>
-    </div>
+    </motion.div>
   );
 }
 
@@ -187,14 +197,15 @@ function MatrixLibrarySelector({ onSelect, selected, squareOnly }) {
     <div className="library-browser">
       <div className="library-toolbar">
         {!squareOnly && (
-          <div className="mode-tabs sub-tabs">
-            <button type="button" className={libType === 'square' ? 'tab active' : 'tab'} onClick={() => setLibType('square')}>
-              方阵库
-            </button>
-            <button type="button" className={libType === 'rectangular' ? 'tab active' : 'tab'} onClick={() => setLibType('rectangular')}>
-              非方阵库
-            </button>
-          </div>
+          <SegmentTabs
+            layoutId="matrix-lib-tabs"
+            value={libType}
+            onChange={setLibType}
+            options={[
+              { value: 'square', label: '方阵库' },
+              { value: 'rectangular', label: '非方阵库' },
+            ]}
+          />
         )}
         <input
           type="search"
@@ -211,20 +222,17 @@ function MatrixLibrarySelector({ onSelect, selected, squareOnly }) {
       ) : (
         <div className="library-grid library-grid--modal">
           {filtered.map((m) => (
-            <div
+            <LibraryCard
               key={m.id}
-              role="button"
-              tabIndex={0}
-              className={`library-card ${selected?.matrix_id === m.id ? 'selected' : ''}`}
-              onClick={() => onSelect({ source: 'library', matrix_id: m.id, item: m, matrix: m.matrix })}
-              onKeyDown={(e) => e.key === 'Enter' && onSelect({ source: 'library', matrix_id: m.id, item: m, matrix: m.matrix })}
+              selected={selected?.matrix_id === m.id}
+              onSelect={() => onSelect({ source: 'library', matrix_id: m.id, item: m, matrix: m.matrix })}
             >
               <h4 className="text-h4">{m.name}</h4>
               <p className="meta text-label">{m.rows}×{m.cols}</p>
               <MatrixPreview matrix={m.matrix} compact />
               <div className="tags">{m.tags?.map((t) => <span key={t} className="tag">{t}</span>)}</div>
               <p className="desc text-muted">{m.description}</p>
-            </div>
+            </LibraryCard>
           ))}
         </div>
       )}
