@@ -56,14 +56,52 @@ def _eval_sturm(sequence, c):
     return [float(sp.N(g.subs(X, c), 15)) for g in sequence]
 
 
-def _cauchy_bound(f):
-    poly = sp.Poly(f, X)
-    an = poly.LC()
-    coeffs = [abs(float(c / an)) for c in poly.all_coeffs()[:-1]]
-    B = 1 + max(coeffs) if coeffs else 1
-    # Slightly pad so real roots lying exactly on the Cauchy circle are interior.
-    pad = max(1e-4, 1e-9 * B)
-    return -B - pad, B + pad
+def _positive_root_bound(f):
+    """Upper bound for positive real roots.
+
+    If a_n > 0 and some a_i < 0 (i < n), every positive root is < 1 + max|a_i/a_n|.
+    If no such negative coefficient exists, there is no positive real root.
+    """
+    poly = sp.Poly(sp.expand(f), X)
+    if poly.degree() <= 0:
+        return 0.0
+    coeffs = [float(c) for c in poly.all_coeffs()]
+    an = coeffs[0]
+    if abs(an) < 1e-15:
+        return 0.0
+    normalized = [coeffs[i] / an for i in range(1, len(coeffs))]
+    negative = [abs(c) for c in normalized if c < -1e-15]
+    if not negative:
+        return 0.0
+    return 1.0 + max(negative)
+
+
+def _cauchy_radius(f):
+    """Symmetric Cauchy radius: every complex root satisfies |z| <= B."""
+    poly = sp.Poly(sp.expand(f), X)
+    an = float(poly.LC())
+    ratios = [abs(float(c / an)) for c in poly.all_coeffs()[1:]]
+    return 1.0 + max(ratios) if ratios else 1.0
+
+
+def _real_root_bounds(f):
+    """Asymmetric interval [L, R] containing all real roots.
+
+    Positive roots are bounded by _positive_root_bound(f); negative roots by
+    negating the positive-root bound of f(-x).  Only when both sides collapse
+    to 0 (e.g. no real roots) do we fall back to the symmetric Cauchy disk.
+    """
+    pos_R = _positive_root_bound(f)
+    pos_L = _positive_root_bound(sp.expand(f.subs(X, -X)))
+    L = -pos_L if pos_L > 1e-15 else 0.0
+    R = pos_R if pos_R > 1e-15 else 0.0
+
+    if R - L <= 1e-15:
+        B = _cauchy_radius(f)
+        L, R = -B, B
+
+    pad = max(1e-4, 1e-9 * max(abs(L), abs(R), 1.0))
+    return L - pad, R + pad
 
 
 def _count_roots_in_interval(sequence, a, b):
@@ -187,10 +225,10 @@ def compute_sturm(f_expr):
         "latex": ",\\quad ".join(f"g_{{{i}}}={l}" for i, l in enumerate(seq_latex)),
     })
 
-    L, R = _cauchy_bound(work_f)
+    L, R = _real_root_bounds(work_f)
     steps.append({
-        "title": "Cauchy 根界",
-        "content": f"所有实根在 [{L:.6g}, {R:.6g}] 内",
+        "title": "实根界",
+        "content": f"正根上界 R={R:.6g}，负根下界 L={L:.6g}，所有实根在 [{L:.6g}, {R:.6g}] 内",
         "latex": f"L={L},\\quad R={R}",
     })
 
