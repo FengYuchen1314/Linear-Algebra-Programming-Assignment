@@ -5,7 +5,7 @@ import MathLine from '../components/MathLine';
 import ResultBlock from '../components/ResultBlock';
 import StepBlock from '../components/StepBlock';
 import ErrorBlock, { WarningBlock } from '../components/ErrorBlock';
-import PageLayout, { ActionPanel, ResultsSection } from '../components/ui/PageLayout';
+import PageLayout, { ActionPanel, ResultsSection, WorkflowSection } from '../components/ui/PageLayout';
 import Button from '../components/ui/Button';
 import { IconCompute } from '../components/ui/Icons';
 import { valueToLatex, numberToLatex } from '../utils/latex';
@@ -23,17 +23,19 @@ export default function DecompositionPage() {
   const [result, setResult] = useState(null);
   const [loading, setLoading] = useState(false);
 
-  const handleCompute = async () => {
-    if (!selected) return;
+  const runAnalysis = async (selection) => {
+    const item = selection ?? selected;
+    if (!item) return;
+    setSelected(item);
     setLoading(true);
     setResult(null);
-    const item = DECOMP_TYPES.find((d) => d.key === decompType);
+    const decomp = DECOMP_TYPES.find((d) => d.key === decompType);
     const body = {
-      source: selected.source,
-      matrix_id: selected.matrix_id,
-      requirement: selected.requirement,
+      source: item.source,
+      matrix_id: item.matrix_id,
+      requirement: item.requirement,
     };
-    const resp = await item.fn(body);
+    const resp = await decomp.fn(body);
     setResult(resp);
     setLoading(false);
   };
@@ -45,26 +47,32 @@ export default function DecompositionPage() {
       title="矩阵分解"
       description="满秩分解、LU/PLU、LDU 与奇异值分解，含分解验证。"
     >
-      <MatrixSourceSelector onSelect={setSelected} selected={selected} />
+      <WorkflowSection>
+        <MatrixSourceSelector
+          onSelect={setSelected}
+          onConfirmAndAnalyze={runAnalysis}
+          selected={selected}
+        />
 
-      <ActionPanel>
-        <div className="decomp-selector">
-          <label htmlFor="decomp-type">分解类型</label>
-          <select id="decomp-type" value={decompType} onChange={(e) => setDecompType(e.target.value)}>
-            {DECOMP_TYPES.map((d) => (
-              <option key={d.key} value={d.key}>{d.label}</option>
-            ))}
-          </select>
-        </div>
-        <Button
-          icon={<IconCompute />}
-          loading={loading}
-          onClick={handleCompute}
-          disabled={!selected}
-        >
-          开始分解
-        </Button>
-      </ActionPanel>
+        <ActionPanel>
+          <div className="decomp-selector">
+            <label htmlFor="decomp-type">分解类型</label>
+            <select id="decomp-type" value={decompType} onChange={(e) => setDecompType(e.target.value)}>
+              {DECOMP_TYPES.map((d) => (
+                <option key={d.key} value={d.key}>{d.label}</option>
+              ))}
+            </select>
+          </div>
+          <Button
+            icon={<IconCompute />}
+            loading={loading}
+            onClick={() => runAnalysis()}
+            disabled={!selected}
+          >
+            开始分解
+          </Button>
+        </ActionPanel>
+      </WorkflowSection>
 
       {result && (
         <ResultsSection>

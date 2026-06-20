@@ -1,17 +1,22 @@
 export default function Button({
   children,
-  variant = 'primary',
+  variant = 'filled',
   size = 'md',
   icon,
   loading,
   className = '',
   ...props
 }) {
+  const resolved = variant === 'primary' ? 'filled'
+    : variant === 'secondary' ? 'tonal'
+      : variant;
+
   const cls = [
-    'btn',
-    `btn--${variant}`,
-    size === 'sm' ? 'btn--sm' : '',
-    loading ? 'btn--loading' : '',
+    'md-button',
+    `md-button--${resolved}`,
+    size === 'sm' ? 'md-button--sm' : '',
+    'md-state-layer',
+    loading ? 'md-button--loading' : '',
     className,
   ]
     .filter(Boolean)
@@ -19,8 +24,10 @@ export default function Button({
 
   return (
     <button type="button" className={cls} disabled={loading || props.disabled} {...props}>
-      {loading ? <span className="btn-spinner" aria-hidden /> : icon && <span className="btn-icon">{icon}</span>}
-      <span>{loading ? '计算中…' : children}</span>
+      {loading ? <span className="md-button__spinner" aria-hidden /> : icon && (
+        <span className="md-button__icon" aria-hidden>{icon}</span>
+      )}
+      <span className="md-button__label">{loading ? '计算中…' : children}</span>
     </button>
   );
 }

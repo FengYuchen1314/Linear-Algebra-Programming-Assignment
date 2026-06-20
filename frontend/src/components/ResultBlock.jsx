@@ -3,12 +3,11 @@ import { IconCheck } from './ui/Icons';
 
 export default function ResultBlock({ title, children, latex }) {
   return (
-    <div className="result-block">
+    <article className="md-card md-card--elevated result-block">
       {title && (
-        <div className="result-block-header">
-          <span className="result-block-marker" aria-hidden />
-          <h3>{title}</h3>
-        </div>
+        <header className="result-block-header">
+          <h3 className="md-title-medium">{title}</h3>
+        </header>
       )}
       <div className="result-content">{children}</div>
       {latex && (
@@ -16,14 +15,17 @@ export default function ResultBlock({ title, children, latex }) {
           <MathJaxDisplay tex={latex} />
         </div>
       )}
-    </div>
+    </article>
   );
 }
 
 export function SelectedBanner({ children }) {
   return (
-    <div className="selected-info">
-      <strong><IconCheck /> 已选择</strong>
+    <div className="md-banner md-banner--success selected-info">
+      <strong className="md-label-large">
+        <IconCheck aria-hidden />
+        已选择
+      </strong>
       {children}
     </div>
   );

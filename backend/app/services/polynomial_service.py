@@ -105,8 +105,19 @@ def _real_root_bounds(f):
 
 
 def _count_roots_in_interval(sequence, a, b):
-    va = _sign_variations(_eval_sturm(sequence, a))
-    vb = _sign_variations(_eval_sturm(sequence, b))
+    """Count distinct real roots in (a, b] via Sturm's theorem.
+
+    Evaluate slightly inside the endpoints so zeros in the Sturm sequence at
+    exact roots of f do not corrupt the variation count.
+    """
+    width = b - a
+    eps = min(INTERIOR_OFFSET, width / 4) if width > 8 * INTERIOR_OFFSET else 0.0
+    a_eval = a + eps
+    b_eval = b - eps if width > 2 * eps else b
+    if a_eval >= b_eval:
+        a_eval, b_eval = a, b
+    va = _sign_variations(_eval_sturm(sequence, a_eval))
+    vb = _sign_variations(_eval_sturm(sequence, b_eval))
     return va - vb, va, vb
 
 
@@ -160,23 +171,39 @@ def _isolate_roots(f, sequence, left, right, intervals, steps):
 
 
 def _bisect_root(f, left, right, precision):
+    """Refine an isolated interval to approximate a simple real root."""
     a, b = left, right
-    if abs(a - b) <= precision:
+    if b - a <= precision:
         return (a + b) / 2
-    fa = float(sp.N(f.subs(X, a), 15))
-    fb = float(sp.N(f.subs(X, b), 15))
+    if abs(b - a) < 1e-14:
+        return a
+
+    fa = _fval(f, a)
+    fb = _fval(f, b)
+
+    if abs(fa) < ROOT_TOL:
+        return a
+    if abs(fb) < ROOT_TOL:
+        return b
+
     if fa * fb > 0:
-        return (a + b) / 2
+        mid = (a + b) / 2
+        fm = _fval(f, mid)
+        if abs(fm) < ROOT_TOL:
+            return mid
+        candidates = [(a, fa), (mid, fm), (b, fb)]
+        x_best, _ = min(candidates, key=lambda t: abs(t[1]))
+        return x_best
+
     while b - a > precision:
         mid = (a + b) / 2
-        fm = float(sp.N(f.subs(X, mid), 15))
-        if abs(fm) <= precision:
+        fm = _fval(f, mid)
+        if abs(fm) < ROOT_TOL:
             return mid
         if fa * fm <= 0:
-            b = mid
+            b, fb = mid, fm
         else:
-            a = mid
-            fa = fm
+            a, fa = mid, fm
     return (a + b) / 2
 
 

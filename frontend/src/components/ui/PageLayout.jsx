@@ -1,22 +1,33 @@
-export default function PageLayout({ title, description, children, actions }) {
+export default function PageLayout({ title, description, children }) {
   return (
     <div className="page">
-      <header className="page-header">
-        <div className="page-header-text">
-          <h2>{title}</h2>
-          {description && <p className="page-description">{description}</p>}
-        </div>
-        {actions && <div className="page-header-actions">{actions}</div>}
+      <header className="page-hero">
+        <h1 className="md-headline-medium page-title">{title}</h1>
+        {description && <p className="page-description md-body-large">{description}</p>}
       </header>
       <div className="page-body">{children}</div>
     </div>
   );
 }
 
-export function ActionPanel({ children }) {
-  return <div className="action-panel">{children}</div>;
+export function WorkflowSection({ children }) {
+  return <section className="workflow-section">{children}</section>;
+}
+
+export function ActionPanel({ title = '分析参数', children }) {
+  return (
+    <div className="md-card md-card--outlined action-panel">
+      <h3 className="md-title-small action-panel-title">{title}</h3>
+      <div className="action-panel-body">{children}</div>
+    </div>
+  );
 }
 
 export function ResultsSection({ children }) {
-  return <section className="results">{children}</section>;
+  return (
+    <section className="results-section">
+      <h2 className="md-title-large results-section-title">分析结果</h2>
+      <div className="results">{children}</div>
+    </section>
+  );
 }

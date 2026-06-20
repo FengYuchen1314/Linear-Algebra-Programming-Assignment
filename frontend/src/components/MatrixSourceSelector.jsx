@@ -4,10 +4,17 @@ import MatrixPreview from './MatrixPreview';
 import { SelectedBanner } from './ResultBlock';
 import Modal from './ui/Modal';
 import Button from './ui/Button';
+import GenerateStatus from './ui/GenerateStatus';
 
 export { MatrixPreview };
 
-export default function MatrixSourceSelector({ onSelect, selected, matrixTypeHint = 'auto', squareOnly = false }) {
+export default function MatrixSourceSelector({
+  onSelect,
+  onConfirmAndAnalyze,
+  selected,
+  matrixTypeHint = 'auto',
+  squareOnly = false,
+}) {
   const [libraryOpen, setLibraryOpen] = useState(false);
   const [generateOpen, setGenerateOpen] = useState(false);
   const [requirement, setRequirement] = useState('');
@@ -18,12 +25,12 @@ export default function MatrixSourceSelector({ onSelect, selected, matrixTypeHin
   const handleGenerate = async () => {
     setLoading(true);
     setError(null);
+    setGenerated(null);
     const mtype = squareOnly ? 'square' : matrixTypeHint;
     try {
       const resp = await api.generateMatrix(requirement, mtype);
       if (!resp.success) {
         setError(resp.errors?.[0] || '生成失败');
-        setGenerated(null);
       } else {
         setGenerated(resp);
       }
@@ -34,15 +41,23 @@ export default function MatrixSourceSelector({ onSelect, selected, matrixTypeHin
     }
   };
 
+  const buildSelection = () => ({
+    source: 'generated',
+    requirement,
+    matrix: generated.matrix,
+    description: generated.description,
+  });
+
   const confirmGenerated = () => {
-    onSelect({
-      source: 'generated',
-      requirement,
-      matrix: generated.matrix,
-      description: generated.description,
-    });
+    const item = buildSelection();
+    if (onConfirmAndAnalyze) {
+      onConfirmAndAnalyze(item);
+    } else {
+      onSelect(item);
+    }
     setGenerateOpen(false);
     setGenerated(null);
+    setError(null);
   };
 
   const handleLibrarySelect = (item) => {
@@ -50,18 +65,25 @@ export default function MatrixSourceSelector({ onSelect, selected, matrixTypeHin
     setLibraryOpen(false);
   };
 
+  const closeGenerateModal = () => {
+    if (loading) return;
+    setGenerateOpen(false);
+    setGenerated(null);
+    setError(null);
+  };
+
   return (
     <div className="source-selector">
       <div className="source-selector-header">
-        <h3>选择矩阵</h3>
-        <p>从矩阵库选取，或根据自然语言描述生成</p>
+        <h3 className="md-title-medium">选择矩阵</h3>
+        <p className="md-body-medium">从矩阵库选取，或使用 DeepSeek 根据描述生成</p>
       </div>
 
       <div className="source-actions">
-        <Button variant="secondary" onClick={() => setLibraryOpen(true)}>
+        <Button variant="tonal" onClick={() => setLibraryOpen(true)}>
           从矩阵库选择…
         </Button>
-        <Button variant="secondary" onClick={() => setGenerateOpen(true)}>
+        <Button variant="outlined" onClick={() => setGenerateOpen(true)}>
           AI 生成…
         </Button>
       </div>
@@ -69,7 +91,10 @@ export default function MatrixSourceSelector({ onSelect, selected, matrixTypeHin
       {selected && (
         <SelectedBanner>
           <MatrixPreview matrix={selected.matrix || selected.item?.matrix} />
-          {selected.item?.name && <p className="selected-name">{selected.item.name}</p>}
+          {selected.item?.name && <p className="selected-name md-body-small">{selected.item.name}</p>}
+          {selected.description && !selected.item?.name && (
+            <p className="selected-name md-body-small">{selected.description}</p>
+          )}
         </SelectedBanner>
       )}
 
@@ -81,26 +106,36 @@ export default function MatrixSourceSelector({ onSelect, selected, matrixTypeHin
         />
       </Modal>
 
-      <Modal open={generateOpen} onClose={() => setGenerateOpen(false)} title="AI 生成矩阵" size="md">
+      <Modal open={generateOpen} onClose={closeGenerateModal} title="AI 生成矩阵" size="md">
         <div className="generate-panel">
+          <p className="md-body-medium generate-panel-hint">
+            用自然语言描述矩阵特征，例如维度、可逆性、Jordan 结构等。
+          </p>
           <textarea
-            placeholder="描述您需要的矩阵，例如：给我一个三阶可逆矩阵"
+            className="md-outlined-input"
+            placeholder="例如：给我一个三阶可对角化、特征值为 1,2,3 的矩阵"
             value={requirement}
             onChange={(e) => setRequirement(e.target.value)}
             rows={4}
+            disabled={loading}
           />
-          <div className="modal-actions">
-            <Button variant="secondary" onClick={() => setGenerateOpen(false)}>取消</Button>
-            <Button loading={loading} onClick={handleGenerate} disabled={!requirement.trim()}>
-              生成矩阵
-            </Button>
-          </div>
-          {error && <div className="error-msg">{error}</div>}
-          {generated && (
+          <GenerateStatus loading={loading} error={error && !generated ? error : null} entityLabel="矩阵" />
+          {!loading && (
+            <div className="modal-actions">
+              <Button variant="text" onClick={closeGenerateModal}>取消</Button>
+              <Button loading={loading} onClick={handleGenerate} disabled={!requirement.trim()}>
+                开始生成
+              </Button>
+            </div>
+          )}
+          {generated && !loading && (
             <div className="preview-box">
+              <p className="md-label-medium preview-box-label">生成预览</p>
               <MatrixPreview matrix={generated.matrix} />
-              <p>{generated.description}</p>
-              <Button onClick={confirmGenerated}>确认使用此矩阵</Button>
+              <p className="md-body-medium">{generated.description}</p>
+              <Button onClick={confirmGenerated}>
+                确认使用并分析
+              </Button>
             </div>
           )}
         </div>
@@ -128,12 +163,7 @@ function MatrixLibrarySelector({ onSelect, selected, squareOnly }) {
     const q = query.trim().toLowerCase();
     if (!q) return matrices;
     return matrices.filter((m) => {
-      const haystack = [
-        m.name,
-        m.description,
-        m.id,
-        ...(m.tags || []),
-      ].join(' ').toLowerCase();
+      const haystack = [m.name, m.description, m.id, ...(m.tags || [])].join(' ').toLowerCase();
       return haystack.includes(q);
     });
   }, [matrices, query]);
@@ -153,16 +183,16 @@ function MatrixLibrarySelector({ onSelect, selected, squareOnly }) {
         )}
         <input
           type="search"
-          className="library-search field-input"
+          className="library-search md-outlined-input"
           placeholder="搜索名称、标签或描述…"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
         />
       </div>
       {loading ? (
-        <p className="loading-text">加载矩阵库</p>
+        <p className="loading-text md-body-medium">加载矩阵库…</p>
       ) : filtered.length === 0 ? (
-        <p className="roots-empty">没有匹配的矩阵</p>
+        <p className="roots-empty md-body-medium">没有匹配的矩阵</p>
       ) : (
         <div className="library-grid library-grid--modal">
           {filtered.map((m) => (
@@ -174,11 +204,11 @@ function MatrixLibrarySelector({ onSelect, selected, squareOnly }) {
               onClick={() => onSelect({ source: 'library', matrix_id: m.id, item: m, matrix: m.matrix })}
               onKeyDown={(e) => e.key === 'Enter' && onSelect({ source: 'library', matrix_id: m.id, item: m, matrix: m.matrix })}
             >
-              <h4>{m.name}</h4>
-              <p className="meta">{m.rows}×{m.cols}</p>
+              <h4 className="md-title-small">{m.name}</h4>
+              <p className="meta md-label-medium">{m.rows}×{m.cols}</p>
               <MatrixPreview matrix={m.matrix} compact />
               <div className="tags">{m.tags?.map((t) => <span key={t} className="tag">{t}</span>)}</div>
-              <p className="desc">{m.description}</p>
+              <p className="desc md-body-small">{m.description}</p>
             </div>
           ))}
         </div>

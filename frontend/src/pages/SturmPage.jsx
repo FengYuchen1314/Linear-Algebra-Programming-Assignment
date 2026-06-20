@@ -6,7 +6,7 @@ import MathLine from '../components/MathLine';
 import ResultBlock from '../components/ResultBlock';
 import StepBlock from '../components/StepBlock';
 import ErrorBlock, { WarningBlock } from '../components/ErrorBlock';
-import PageLayout, { ActionPanel, ResultsSection } from '../components/ui/PageLayout';
+import PageLayout, { ActionPanel, ResultsSection, WorkflowSection } from '../components/ui/PageLayout';
 import Button from '../components/ui/Button';
 import { IconCompute } from '../components/ui/Icons';
 import ApproxRootsPanel from '../components/ApproxRootsPanel';
@@ -19,16 +19,18 @@ export default function SturmPage() {
   const [loading, setLoading] = useState(false);
   const [precision, setPrecision] = useState('0.01');
 
-  const handleCompute = async () => {
-    if (!selected) return;
+  const runAnalysis = async (selection) => {
+    const item = selection ?? selected;
+    if (!item) return;
     const eps = Number(precision);
     if (!Number.isFinite(eps) || eps <= 0) return;
+    setSelected(item);
     setLoading(true);
     setResult(null);
     const body = {
-      source: selected.source,
-      polynomial_id: selected.polynomial_id,
-      requirement: selected.requirement,
+      source: item.source,
+      polynomial_id: item.polynomial_id,
+      requirement: item.requirement,
       precision: eps,
     };
     const resp = await api.computeSturm(body);
@@ -44,33 +46,39 @@ export default function SturmPage() {
       title="Sturm 序列与求根"
       description="构造 Sturm 序列，隔离实根区间并用二分法求近似根。"
     >
-      <PolynomialSourceSelector onSelect={setSelected} selected={selected} />
+      <WorkflowSection>
+        <PolynomialSourceSelector
+          onSelect={setSelected}
+          onConfirmAndAnalyze={runAnalysis}
+          selected={selected}
+        />
 
-      <ActionPanel>
-        <div className="field-group precision-control">
-          <label htmlFor="sturm-precision">求根精度 ε</label>
-          <input
-            id="sturm-precision"
-            className="field-input"
-            type="number"
-            min="1e-12"
-            step="any"
-            value={precision}
-            onChange={(e) => setPrecision(e.target.value)}
-          />
-          {!epsValid && precision !== '' && (
-            <span className="error-msg">须为正数</span>
-          )}
-        </div>
-        <Button
-          icon={<IconCompute />}
-          loading={loading}
-          onClick={handleCompute}
-          disabled={!selected || !epsValid}
-        >
-          开始 Sturm 分析
-        </Button>
-      </ActionPanel>
+        <ActionPanel>
+          <div className="field-group precision-control">
+            <label htmlFor="sturm-precision">求根精度 ε</label>
+            <input
+              id="sturm-precision"
+              className="field-input"
+              type="number"
+              min="1e-12"
+              step="any"
+              value={precision}
+              onChange={(e) => setPrecision(e.target.value)}
+            />
+            {!epsValid && precision !== '' && (
+              <span className="error-msg">须为正数</span>
+            )}
+          </div>
+          <Button
+            icon={<IconCompute />}
+            loading={loading}
+            onClick={() => runAnalysis()}
+            disabled={!selected || !epsValid}
+          >
+            开始 Sturm 分析
+          </Button>
+        </ActionPanel>
+      </WorkflowSection>
 
       {result && (
         <ResultsSection>

@@ -6,7 +6,7 @@ import MathLine from '../components/MathLine';
 import ResultBlock from '../components/ResultBlock';
 import StepBlock from '../components/StepBlock';
 import ErrorBlock, { WarningBlock } from '../components/ErrorBlock';
-import PageLayout, { ActionPanel, ResultsSection } from '../components/ui/PageLayout';
+import PageLayout, { ActionPanel, ResultsSection, WorkflowSection } from '../components/ui/PageLayout';
 import Button from '../components/ui/Button';
 import { IconCompute } from '../components/ui/Icons';
 import { eigenvalueLineLatex } from '../utils/latex';
@@ -16,14 +16,16 @@ export default function MatrixPropertiesPage() {
   const [result, setResult] = useState(null);
   const [loading, setLoading] = useState(false);
 
-  const handleCompute = async () => {
-    if (!selected) return;
+  const runAnalysis = async (selection) => {
+    const item = selection ?? selected;
+    if (!item) return;
+    setSelected(item);
     setLoading(true);
     setResult(null);
     const resp = await api.computeMatrixProperties({
-      source: selected.source,
-      matrix_id: selected.matrix_id,
-      requirement: selected.requirement,
+      source: item.source,
+      matrix_id: item.matrix_id,
+      requirement: item.requirement,
     });
     setResult(resp);
     setLoading(false);
@@ -36,18 +38,24 @@ export default function MatrixPropertiesPage() {
       title="矩阵基本性质"
       description="分析矩阵的秩、行列式、迹、可逆性、特征值与可对角化性。"
     >
-      <MatrixSourceSelector onSelect={setSelected} selected={selected} />
+      <WorkflowSection>
+        <MatrixSourceSelector
+          onSelect={setSelected}
+          onConfirmAndAnalyze={runAnalysis}
+          selected={selected}
+        />
 
-      <ActionPanel>
-        <Button
-          icon={<IconCompute />}
-          loading={loading}
-          onClick={handleCompute}
-          disabled={!selected}
-        >
-          分析矩阵性质
-        </Button>
-      </ActionPanel>
+        <ActionPanel>
+          <Button
+            icon={<IconCompute />}
+            loading={loading}
+            onClick={() => runAnalysis()}
+            disabled={!selected}
+          >
+            分析矩阵性质
+          </Button>
+        </ActionPanel>
+      </WorkflowSection>
 
       {result && (
         <ResultsSection>

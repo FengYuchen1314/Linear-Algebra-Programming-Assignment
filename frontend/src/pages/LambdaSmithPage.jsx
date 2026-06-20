@@ -6,7 +6,7 @@ import MathLine from '../components/MathLine';
 import ResultBlock from '../components/ResultBlock';
 import StepBlock from '../components/StepBlock';
 import ErrorBlock, { WarningBlock } from '../components/ErrorBlock';
-import PageLayout, { ActionPanel, ResultsSection } from '../components/ui/PageLayout';
+import PageLayout, { ActionPanel, ResultsSection, WorkflowSection } from '../components/ui/PageLayout';
 import Button from '../components/ui/Button';
 import { IconCompute } from '../components/ui/Icons';
 import { numberToLatex, pickLatex, subscriptLatex } from '../utils/latex';
@@ -16,14 +16,16 @@ export default function LambdaSmithPage() {
   const [result, setResult] = useState(null);
   const [loading, setLoading] = useState(false);
 
-  const handleCompute = async () => {
-    if (!selected) return;
+  const runAnalysis = async (selection) => {
+    const item = selection ?? selected;
+    if (!item) return;
+    setSelected(item);
     setLoading(true);
     setResult(null);
     const resp = await api.computeLambdaSmith({
-      source: selected.source,
-      matrix_id: selected.matrix_id,
-      requirement: selected.requirement,
+      source: item.source,
+      matrix_id: item.matrix_id,
+      requirement: item.requirement,
     });
     setResult(resp);
     setLoading(false);
@@ -36,18 +38,25 @@ export default function LambdaSmithPage() {
       title="λ-矩阵法与 Smith 标准型"
       description="对 λI−A 做 Smith 分解，求不变因子、初等因子与 Jordan 块。"
     >
-      <MatrixSourceSelector onSelect={setSelected} selected={selected} squareOnly />
+      <WorkflowSection>
+        <MatrixSourceSelector
+          onSelect={setSelected}
+          onConfirmAndAnalyze={runAnalysis}
+          selected={selected}
+          squareOnly
+        />
 
-      <ActionPanel>
-        <Button
-          icon={<IconCompute />}
-          loading={loading}
-          onClick={handleCompute}
-          disabled={!selected}
-        >
-          计算 Smith 标准型
-        </Button>
-      </ActionPanel>
+        <ActionPanel>
+          <Button
+            icon={<IconCompute />}
+            loading={loading}
+            onClick={() => runAnalysis()}
+            disabled={!selected}
+          >
+            计算 Smith 标准型
+          </Button>
+        </ActionPanel>
+      </WorkflowSection>
 
       {result && (
         <ResultsSection>

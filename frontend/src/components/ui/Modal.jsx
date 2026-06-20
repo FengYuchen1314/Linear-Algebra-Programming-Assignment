@@ -24,22 +24,27 @@ export default function Modal({ open, onClose, title, children, size = 'lg' }) {
   if (!open) return null;
 
   return (
-    <div className="modal-root" role="presentation" onClick={onClose}>
+    <div className="md-dialog__scrim" role="presentation" onClick={onClose}>
       <div
         ref={dialogRef}
-        className={`modal-dialog modal-dialog--${size}`}
+        className={`md-dialog md-dialog--${size}`}
         role="dialog"
         aria-modal="true"
         aria-labelledby="modal-title"
         onClick={(e) => e.stopPropagation()}
       >
-        <header className="modal-header">
-          <h2 id="modal-title">{title}</h2>
-          <button type="button" className="modal-close" onClick={onClose} aria-label="关闭">
+        <header className="md-dialog__header">
+          <h2 id="modal-title" className="md-headline-small">{title}</h2>
+          <button
+            type="button"
+            className="md-icon-button md-state-layer md-dialog__close"
+            onClick={onClose}
+            aria-label="关闭"
+          >
             <IconClose />
           </button>
         </header>
-        <div className="modal-body">{children}</div>
+        <div className="md-dialog__content">{children}</div>
       </div>
     </div>
   );
