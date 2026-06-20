@@ -151,6 +151,11 @@ def poly_to_latex(poly, var=sp.Symbol("x")):
 def exact_matrix_max_abs(expr_mat):
     """Return exact 0 when verification matrix is zero; otherwise numeric max."""
     if isinstance(expr_mat, sp.Matrix):
+        # nsimplify(rational=True) on tiny floating residuals (e.g. 1e-16) is
+        # pathologically slow, so only take the exact path for exact matrices.
+        if any(getattr(e, "has", lambda *_: False)(sp.Float) for e in expr_mat):
+            mx = max((abs(complex(e.evalf())) for e in expr_mat), default=0.0)
+            return 0 if mx < 1e-9 else format_number(round(mx, 10))
         simplified = expr_mat.applyfunc(lambda x: sp.nsimplify(x, rational=True))
         if simplified.is_zero_matrix:
             return 0

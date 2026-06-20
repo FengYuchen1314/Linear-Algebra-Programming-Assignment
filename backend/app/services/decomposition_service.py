@@ -4,13 +4,13 @@ import numpy as np
 import sympy as sp
 from scipy.linalg import svd as scipy_svd
 
-from app.utils.formatter import format_number, matrix_to_list, exact_matrix_max_abs
+from app.utils.formatter import format_number, matrix_to_list, exact_matrix_max_abs, to_exact_matrix
 from app.utils.latex import latex_matrix
 
 
 def full_rank_decomposition(A):
     steps = []
-    sm = sp.Matrix(A.tolist())
+    sm = to_exact_matrix(A)
     m, n = sm.shape
     rank = sm.rank()
     rref, pivot_cols = sm.rref()
@@ -53,7 +53,7 @@ def full_rank_decomposition(A):
 
 def lu_decomposition(A):
     steps = []
-    sm = sp.Matrix(A.tolist())
+    sm = to_exact_matrix(A)
     n = sm.rows
 
     if n != sm.cols:
@@ -115,7 +115,7 @@ def ldu_decomposition(A):
     L = sp.Matrix(lu_result["L"])
     U = sp.Matrix(lu_result["U"])
     P = sp.Matrix(lu_result["P"])
-    sm = sp.Matrix(A.tolist())
+    sm = to_exact_matrix(A)
 
     diag_elems = [U[i, i] for i in range(U.rows)]
     if any(d == 0 for d in diag_elems):
@@ -165,10 +165,10 @@ def ldu_decomposition(A):
 def svd_decomposition(A):
     steps = []
     warnings = []
-    sm = sp.Matrix(A.tolist())
+    sm = to_exact_matrix(A)
     m, n = sm.rows, sm.cols
     rank = sm.rank()
-    AtA = (sm.T * sm).applyfunc(lambda x: sp.nsimplify(x, rational=True))
+    AtA = sm.T * sm
 
     steps.append({
         "title": "SVD 方法",
