@@ -48,6 +48,86 @@ def _numeric_dim_ker_table(A_np, ev_num, alg_mult, n, tol=1e-6):
     return table
 
 
+def _orth(M, tol=1e-9):
+    """Orthonormal basis for the column space of M (numeric)."""
+    M = np.asarray(M, dtype=complex)
+    if M.size == 0 or M.shape[1] == 0:
+        return np.zeros((M.shape[0], 0), dtype=complex)
+    u, s, _ = np.linalg.svd(M)
+    thresh = tol * max(M.shape) * (s[0] if s.size else 1.0)
+    rank = int(np.sum(s > thresh))
+    return u[:, :rank]
+
+
+def _null_basis(M, tol=1e-9):
+    """Orthonormal basis for the null space of M (numeric)."""
+    M = np.asarray(M, dtype=complex)
+    if M.shape[1] == 0:
+        return np.zeros((M.shape[0], 0), dtype=complex)
+    u, s, vh = np.linalg.svd(M)
+    thresh = tol * max(M.shape) * (s[0] if s.size else 1.0)
+    rank = int(np.sum(s > thresh))
+    return vh[rank:].conj().T
+
+
+def _complement(B, base, tol=1e-9):
+    """Basis for the part of col(B) not already contained in col(base)."""
+    Bp = B
+    Qb = _orth(base, tol)
+    if Qb.shape[1] > 0:
+        Bp = B - Qb @ (Qb.conj().T @ B)
+    return _orth(Bp, tol)
+
+
+def _numeric_jordan(A_np, eig_pairs, tol=1e-9):
+    """Numeric Jordan form: J from integer rank structure, P from generalized
+    eigenvector chains. Robust for irrational/complex spectra where exact SymPy
+    would explode. eig_pairs is a list of (numeric_eigenvalue, algebraic_mult)."""
+    n = A_np.shape[0]
+    I = np.eye(n, dtype=complex)
+    P_cols = []
+    blocks = []  # (lambda, block_size)
+    for lam_val, _alg in eig_pairs:
+        N = A_np - lam_val * I
+        # Kernel bases of increasing powers, until the kernel dimension stabilizes.
+        ker = [np.zeros((n, 0), dtype=complex)]
+        dims = [0]
+        power = np.eye(n, dtype=complex)
+        while True:
+            power = power @ N
+            kb = _null_basis(power, tol)
+            ker.append(kb)
+            dims.append(kb.shape[1])
+            if dims[-1] == dims[-2] or len(dims) > n + 1:
+                break
+        q = len(ker) - 2  # highest power whose kernel still grew = max chain length
+        higher = np.zeros((n, 0), dtype=complex)
+        for level in range(q, 0, -1):
+            base = np.concatenate([ker[level - 1], higher], axis=1)
+            tops = _complement(ker[level], base, tol)
+            for j in range(tops.shape[1]):
+                w = tops[:, j]
+                chain = [w]
+                v = w
+                for _ in range(level - 1):
+                    v = N @ v
+                    chain.append(v)
+                blocks.append((lam_val, level))
+                P_cols.extend(reversed(chain))  # eigenvector first -> upper Jordan blocks
+            allk = np.concatenate([higher, tops], axis=1)
+            higher = (N @ allk) if allk.shape[1] > 0 else np.zeros((n, 0), dtype=complex)
+    P = np.column_stack(P_cols) if P_cols else np.eye(n, dtype=complex)
+    J = np.zeros((n, n), dtype=complex)
+    idx = 0
+    for lam_val, size in blocks:
+        for d in range(size):
+            J[idx + d, idx + d] = lam_val
+            if d < size - 1:
+                J[idx + d, idx + d + 1] = 1.0
+        idx += size
+    return P, J
+
+
 def _nullity(B, k):
     return (B ** k).nullspace()
 
@@ -132,19 +212,17 @@ def compute_jordan(A):
     max_nilpotent_index = 0
 
     for ev, alg_mult in eigenvals.items():
-        ev_latex = sp.latex(ev)
-        if complex_spectrum:
+        ev_value, ev_latex = eigenvalue_display(ev)
+        if use_numeric:
             ev_num = complex(ev.evalf())
             geo_mult = n - int(np.linalg.matrix_rank(A_np - ev_num * np.eye(n, dtype=complex), tol=1e-6))
             table = _numeric_dim_ker_table(A_np, ev_num, alg_mult, n)
             B_list = _numeric_matrix_to_list(sp.Matrix((A_np - ev_num * np.eye(n, dtype=complex)).tolist()))
-            ev_value = format_number(round_complex(ev_num))
         else:
             B = sm - ev * sp.eye(n)
             geo_mult = len(B.nullspace())
             table, B_mat = _dim_ker_powers(sm, ev, alg_mult)
             B_list = matrix_to_list(B_mat)
-            ev_value = format_number(ev)
 
         nil_index = max((row["k"] for row in table if row["dim_ker_Bk"] >= alg_mult), default=alg_mult)
         max_nilpotent_index = max(max_nilpotent_index, nil_index)
@@ -171,15 +249,23 @@ def compute_jordan(A):
             ),
         })
 
-    if complex_spectrum:
-        P, J = sp.Matrix(A.tolist()).jordan_form()
-        P_list, J_list = _numeric_matrix_to_list(P), _numeric_matrix_to_list(J)
-        residual = np.linalg.inv(np.array(P.tolist(), dtype=complex)) @ A_np @ np.array(P.tolist(), dtype=complex) - np.array(J.tolist(), dtype=complex)
-        max_err = format_number(round_complex(float(np.max(np.abs(residual))) if residual.size else 0))
+    if use_numeric:
+        eig_pairs = [(complex(ev.evalf()), m) for ev, m in eigenvals.items()]
+        P_np, J_np = _numeric_jordan(A_np, eig_pairs)
+        P_clean = [[round_complex(P_np[i, j]) for j in range(P_np.shape[1])] for i in range(P_np.shape[0])]
+        J_clean = [[round_complex(J_np[i, j]) for j in range(J_np.shape[1])] for i in range(J_np.shape[0])]
+        P_list, J_list = matrix_to_list(P_clean), matrix_to_list(J_clean)
+        P_latex, J_latex = latex_matrix(P_clean), latex_matrix(J_clean)
+        try:
+            residual = np.linalg.solve(P_np, A_np @ P_np) - J_np
+            max_err = format_number(round_complex(float(np.max(np.abs(residual))) if residual.size else 0.0))
+        except np.linalg.LinAlgError:
+            max_err = format_number(0.0)
         jordan_chains = []
     else:
         P, J = sm.jordan_form()
         P_list, J_list = matrix_to_list(P), matrix_to_list(J)
+        P_latex, J_latex = latex_matrix(P.tolist()), latex_matrix(J.tolist())
         verify = (P.inv() * sm * P - J).applyfunc(lambda x: sp.nsimplify(x, rational=True))
         max_err = exact_matrix_max_abs(verify)
         jordan_chains = []
@@ -194,7 +280,7 @@ def compute_jordan(A):
     steps.append({
         "title": "Jordan 标准型",
         "content": "采用上 Jordan 块约定，P⁻¹AP=J",
-        "latex": f"J={latex_matrix(J.tolist())},\\quad P={latex_matrix(P.tolist())}",
+        "latex": f"J={J_latex},\\quad P={P_latex}",
     })
     steps.append({
         "title": "验证 P⁻¹AP=J",
@@ -211,8 +297,8 @@ def compute_jordan(A):
         "jordan_chains": jordan_chains,
         "P": P_list,
         "J": J_list,
-        "P_latex": latex_matrix(P.tolist()),
-        "J_latex": latex_matrix(J.tolist()),
+        "P_latex": P_latex,
+        "J_latex": J_latex,
         "verification_error": max_err,
         "verification_exact": max_err == 0,
         "convention": "上 Jordan 块",

@@ -1,12 +1,14 @@
 """Lambda-matrix method and Smith normal form."""
 
+import numpy as np
 import sympy as sp
 from sympy.polys.domains import QQ
 from sympy.polys.matrices import DomainMatrix
 from sympy.polys.matrices.normalforms import smith_normal_form, invariant_factors
 
-from app.utils.formatter import format_number, matrix_to_list, to_exact_matrix
+from app.utils.formatter import format_number, matrix_to_list, to_exact_matrix, round_complex
 from app.utils.latex import latex_matrix
+from app.services.jordan_service import _numeric_jordan
 
 lam = sp.Symbol("lambda")
 
@@ -121,11 +123,15 @@ def compute_lambda_smith(A):
             inv_idx += 1
         det_factors[f"D_{k}"] = str(product)
 
-    if any(not e.is_real for e in sm.eigenvals()):
-        warnings.append("矩阵存在复特征值，Jordan 标准型采用数值近似")
-        P, J = sp.Matrix(A.tolist()).jordan_form()
+    eigenvals = sm.eigenvals()
+    if not all(e.is_rational for e in eigenvals):
+        warnings.append("矩阵特征值非有理数，Jordan 标准型采用数值近似")
+        eig_pairs = [(complex(e.evalf()), m) for e, m in eigenvals.items()]
+        _P_np, J_np = _numeric_jordan(np.array(A, dtype=complex), eig_pairs)
+        jordan_J_list = [[format_number(round_complex(J_np[i, j])) for j in range(J_np.shape[1])] for i in range(J_np.shape[0])]
     else:
         P, J = sm.jordan_form()
+        jordan_J_list = matrix_to_list(J)
 
     steps.append({
         "title": "不变因子",
@@ -147,7 +153,7 @@ def compute_lambda_smith(A):
         "invariant_factors": [str(f) for f in inv_exprs],
         "elementary_divisors": elementary,
         "jordan_blocks_from_elementary": jordan_blocks,
-        "jordan_form_J": matrix_to_list(J),
+        "jordan_form_J": jordan_J_list,
         "is_diagonalizable": is_diag,
         "minimal_polynomial": str(min_poly),
         "characteristic_polynomial": str(char_poly.as_expr()),

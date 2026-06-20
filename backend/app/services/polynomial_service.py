@@ -8,6 +8,16 @@ from app.utils.latex import latex_expr
 from app.utils.errors import ZERO_POLY_MSG
 
 PRECISION = 1e-8
+ROOT_TOL = 1e-10
+INTERIOR_OFFSET = 1e-8
+
+
+def _fval(f, x):
+    return float(sp.N(f.subs(X, x), 15))
+
+
+def _is_root(f, x):
+    return abs(_fval(f, x)) < ROOT_TOL
 
 
 def _poly_div_rem(f, g):
@@ -48,11 +58,12 @@ def _eval_sturm(sequence, c):
 
 def _cauchy_bound(f):
     poly = sp.Poly(f, X)
-    n = poly.degree()
     an = poly.LC()
     coeffs = [abs(float(c / an)) for c in poly.all_coeffs()[:-1]]
     B = 1 + max(coeffs) if coeffs else 1
-    return -B, B
+    # Slightly pad so real roots lying exactly on the Cauchy circle are interior.
+    pad = max(1e-4, 1e-9 * B)
+    return -B - pad, B + pad
 
 
 def _count_roots_in_interval(sequence, a, b):
@@ -61,15 +72,29 @@ def _count_roots_in_interval(sequence, a, b):
     return va - vb, va, vb
 
 
-def _isolate_roots(f, sequence, left, right, intervals, steps):
-    f_val_left = float(sp.N(f.subs(X, left), 15))
-    f_val_right = float(sp.N(f.subs(X, right), 15))
+def _dedupe_intervals(intervals):
+    """Merge isolation intervals that refer to the same root."""
+    by_center = {}
+    for lo, hi in intervals:
+        center = (lo + hi) / 2
+        key = round(center, 8)
+        if key not in by_center:
+            by_center[key] = [lo, hi]
+    return [by_center[k] for k in sorted(by_center)]
 
-    if abs(f_val_left) < 1e-12:
+
+def _isolate_roots(f, sequence, left, right, intervals, steps):
+    # Record endpoint roots but keep searching the remaining open interval.
+    if _is_root(f, left):
         intervals.append([left, left])
-        steps.append({"title": "端点为根", "content": f"x={left} 是 f(x) 的根"})
-        return
-    if abs(f_val_right) < 1e-12:
+        steps.append({"title": "端点为根", "content": f"x={left:g} 是 f(x) 的根"})
+        left += INTERIOR_OFFSET
+    if _is_root(f, right):
+        intervals.append([right, right])
+        steps.append({"title": "端点为根", "content": f"x={right:g} 是 f(x) 的根"})
+        right -= INTERIOR_OFFSET
+
+    if right - left <= ROOT_TOL:
         return
 
     count, va, vb = _count_roots_in_interval(sequence, left, right)
@@ -79,19 +104,18 @@ def _isolate_roots(f, sequence, left, right, intervals, steps):
         "latex": f"V({left}) - V({right}) = {va} - {vb} = {count}",
     })
 
-    if count == 0:
+    if count <= 0:
         return
     if count == 1:
         intervals.append([left, right])
         return
 
     mid = (left + right) / 2
-    f_mid = float(sp.N(f.subs(X, mid), 15))
-    if abs(f_mid) < 1e-12:
+    if _is_root(f, mid):
         intervals.append([mid, mid])
-        steps.append({"title": "发现根", "content": f"x={mid} 是精确根"})
-        _isolate_roots(f, sequence, left, mid, intervals, steps)
-        _isolate_roots(f, sequence, mid, right, intervals, steps)
+        steps.append({"title": "发现根", "content": f"x={mid:g} 是 f(x) 的根"})
+        _isolate_roots(f, sequence, left, mid - INTERIOR_OFFSET, intervals, steps)
+        _isolate_roots(f, sequence, mid + INTERIOR_OFFSET, right, intervals, steps)
     else:
         _isolate_roots(f, sequence, left, mid, intervals, steps)
         _isolate_roots(f, sequence, mid, right, intervals, steps)
@@ -129,7 +153,7 @@ def compute_sturm(f_expr):
     f = sp.expand(f_expr)
     f_prime = sp.expand(sp.diff(f, X))
     gcd_ff = sp.expand(sp.gcd(f, f_prime))
-    has_multiple = sp.degree(gcd_ff, X) > 0
+    has_multiple = sp.Poly(gcd_ff, X).degree() > 0
 
     steps.append({
         "title": "多项式与导数",
@@ -144,14 +168,14 @@ def compute_sturm(f_expr):
         work_f = squarefree
         steps.append({
             "title": "重根判别",
-            "content": f"gcd(f, f') = {poly_to_str(gcd_ff)} ≠ 1，存在重根。square-free: {poly_to_str(squarefree)}",
-            "latex": f"\\gcd(f,f')={latex_expr(gcd_ff)},\\quad f_{{sf}}={poly_to_latex(squarefree)}",
+            "content": f"gcd(f, f')={poly_to_str(gcd_ff)}，存在重根。square-free: {poly_to_str(squarefree)}",
+            "latex": f"\\gcd(f,f')={latex_expr(gcd_ff)} \\neq 1,\\quad f_{{\\mathrm{{sf}}}}={poly_to_latex(squarefree)}",
         })
     else:
         steps.append({
             "title": "重根判别",
-            "content": "gcd(f, f') = 1，无重根",
-            "latex": f"\\gcd(f,f')=1",
+            "content": "gcd(f, f')=1，无重根",
+            "latex": "\\gcd(f,f')=1",
         })
 
     sequence = _build_sturm_sequence(work_f)
@@ -172,6 +196,7 @@ def compute_sturm(f_expr):
 
     intervals = []
     _isolate_roots(work_f, sequence, L, R, intervals, steps)
+    intervals = _dedupe_intervals(intervals)
 
     approx_roots = []
     for lo, hi in intervals:
