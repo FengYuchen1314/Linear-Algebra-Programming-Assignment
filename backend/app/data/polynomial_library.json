@@ -1,0 +1,98 @@
+[
+  {
+    "id": "poly_001",
+    "name": "三次无重根多项式",
+    "degree": 3,
+    "polynomial": "x^3 - 2*x + 1",
+    "tags": ["三次", "整系数", "无重根", "适合Sturm"],
+    "description": "一个适合演示 Sturm 序列和实根隔离的三次多项式，有三个不同实根"
+  },
+  {
+    "id": "poly_002",
+    "name": "三次有重根多项式",
+    "degree": 3,
+    "polynomial": "x^3 - 3*x^2 + 3*x - 1",
+    "tags": ["三次", "整系数", "有重根"],
+    "description": "(x-1)^3，有一个三重实根"
+  },
+  {
+    "id": "poly_003",
+    "name": "只有一个实根",
+    "degree": 3,
+    "polynomial": "x^3 + x + 1",
+    "tags": ["三次", "整系数", "单实根"],
+    "description": "只有一个实根，另外两个为共轭复根"
+  },
+  {
+    "id": "poly_004",
+    "name": "四个不同实根",
+    "degree": 4,
+    "polynomial": "x^4 - 5*x^2 + 4",
+    "tags": ["四次", "整系数", "无重根", "全实根"],
+    "description": "四个不同实根: -2, -1, 1, 2"
+  },
+  {
+    "id": "poly_005",
+    "name": "含不可约二次因子",
+    "degree": 4,
+    "polynomial": "x^4 + x^2 + 1",
+    "tags": ["四次", "整系数", "不可约因子"],
+    "description": "在实数域上不可约，无实根"
+  },
+  {
+    "id": "poly_006",
+    "name": "Sturm分段明显",
+    "degree": 5,
+    "polynomial": "x^5 - 5*x^3 + 4*x",
+    "tags": ["五次", "整系数", "适合Sturm", "全实根"],
+    "description": "五个实根: -2, -1, 0, 1, 2，根分布清楚"
+  },
+  {
+    "id": "poly_007",
+    "name": "高次整系数多项式",
+    "degree": 6,
+    "polynomial": "x^6 - 3*x^4 + 3*x^2 - 1",
+    "tags": ["六次", "整系数", "有重根"],
+    "description": "(x^2 - 1)^3，根为 ±1 各三重"
+  },
+  {
+    "id": "poly_008",
+    "name": "二次有重根",
+    "degree": 2,
+    "polynomial": "x^2 - 4*x + 4",
+    "tags": ["二次", "整系数", "有重根"],
+    "description": "(x-2)^2，有一个二重实根"
+  },
+  {
+    "id": "poly_009",
+    "name": "五次无重根",
+    "degree": 5,
+    "polynomial": "x^5 - x - 1",
+    "tags": ["五次", "整系数", "无重根"],
+    "description": "一个实根，适合 Sturm 隔离"
+  },
+  {
+    "id": "poly_010",
+    "name": "四次有重根",
+    "degree": 4,
+    "polynomial": "x^4 - 4*x^3 + 6*x^2 - 4*x + 1",
+    "tags": ["四次", "整系数", "有重根"],
+    "description": "(x-1)^4，四重根"
+  },
+  {
+    "id": "poly_011",
+    "name": "三个实根含重根",
+    "degree": 4,
+    "polynomial": "x^4 - 2*x^3 - x^2 + 2*x",
+    "tags": ["四次", "整系数", "有重根", "多实根"],
+    "description": "x(x-1)(x+1)(x-2)，四个实根含 x=0"
+  },
+  {
+    "id": "poly_012",
+    "name": "七次整系数",
+    "degree": 7,
+    "polynomial": "x^7 - 7*x^5 + 14*x^3 - 7*x",
+    "tags": ["七次", "整系数", "适合Sturm"],
+    "description": "x(x^2-1)(x^2-4)(x^2-9) 的变体，多个实根"
+  }
+]
