@@ -5,7 +5,7 @@ from sympy.polys.domains import QQ
 from sympy.polys.matrices import DomainMatrix
 from sympy.polys.matrices.normalforms import smith_normal_form, invariant_factors
 
-from app.utils.formatter import format_number, matrix_to_list
+from app.utils.formatter import format_number, matrix_to_list, to_exact_matrix
 from app.utils.latex import latex_matrix
 
 lam = sp.Symbol("lambda")
@@ -71,7 +71,7 @@ def _compute_determinant_factors(lambda_matrix, n, invs):
 def compute_lambda_smith(A):
     steps = []
     warnings = []
-    sm = sp.Matrix(A.tolist())
+    sm = to_exact_matrix(A)
     n = sm.rows
 
     if n != sm.cols:

@@ -2,7 +2,7 @@
 
 import sympy as sp
 
-from app.utils.formatter import format_number, matrix_to_list, exact_matrix_max_abs, format_number_latex
+from app.utils.formatter import format_number, matrix_to_list, exact_matrix_max_abs, format_number_latex, to_exact_matrix
 from app.utils.latex import latex_matrix
 
 
@@ -12,14 +12,13 @@ def _eigenvalue_analysis(sm):
     eigenvals = sm.eigenvals()
     analysis = []
     for lam, alg_mult in eigenvals.items():
-        lam_exact = sp.nsimplify(lam, rational=True)
         B = sm - lam * sp.eye(n)
         geo_mult = len(B.nullspace())
         analysis.append({
-            "eigenvalue": format_number(lam_exact),
-            "eigenvalue_latex": sp.latex(lam_exact),
+            "eigenvalue": format_number(lam),
+            "eigenvalue_latex": sp.latex(lam),
             "algebraic_multiplicity": alg_mult,
-            "geometric_multiplicity": len(geo_mult),
+            "geometric_multiplicity": geo_mult,
         })
     total_geo = sum(a["geometric_multiplicity"] for a in analysis)
     is_diag = total_geo == n
@@ -30,7 +29,7 @@ def _eigenvalue_analysis(sm):
 def compute_properties(A):
     steps = []
     warnings = []
-    sm = sp.Matrix(A.tolist())
+    sm = to_exact_matrix(A)
     m, n = sm.rows, sm.cols
     rank = sm.rank()
     rref = sm.rref()[0]

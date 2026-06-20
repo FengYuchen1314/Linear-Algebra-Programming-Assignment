@@ -8,11 +8,12 @@ export default function StepBlock({ steps }) {
       {steps.map((step, i) => (
         <div key={i} className="step-block">
           <h4>{step.title}</h4>
-          <p>{step.content}</p>
-          {step.latex && (
+          {step.latex ? (
             <div className="latex-block">
               <MathJaxDisplay tex={step.latex} />
             </div>
+          ) : (
+            step.content && <p>{step.content}</p>
           )}
         </div>
       ))}

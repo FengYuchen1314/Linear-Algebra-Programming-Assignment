@@ -62,7 +62,7 @@ export default function JordanPage() {
               <ResultBlock title="dim ker(B^k) 表格">
                 {Object.entries(r.nilpotent_tables || {}).map(([lam, data]) => (
                   <div key={lam}>
-                    <MathLine tex={`\\lambda = ${lam}`} />
+                    <MathLine tex={`\\lambda = ${data.eigenvalue_latex || lam}`} />
                     <MatrixPreview matrix={data.B_matrix} label={`B=A-\\lambda I`} />
                     <table className="data-table">
                       <thead>

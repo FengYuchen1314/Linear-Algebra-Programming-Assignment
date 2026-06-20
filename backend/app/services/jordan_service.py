@@ -2,7 +2,7 @@
 
 import sympy as sp
 
-from app.utils.formatter import format_number, matrix_to_list, matrix_to_latex, exact_matrix_max_abs, _nsimplify_expr
+from app.utils.formatter import format_number, matrix_to_list, matrix_to_latex, exact_matrix_max_abs, to_exact_matrix
 from app.utils.latex import latex_matrix
 
 lam = sp.Symbol("lambda")
@@ -62,7 +62,7 @@ def _jordan_block(size, eigenval):
 def compute_jordan(A):
     steps = []
     warnings = []
-    sm = sp.Matrix(A.tolist())
+    sm = to_exact_matrix(A)
     n = sm.rows
 
     if n != sm.cols:
@@ -82,29 +82,34 @@ def compute_jordan(A):
     max_nilpotent_index = 0
 
     for ev, alg_mult in eigenvals.items():
-        ev_exact = _nsimplify_expr(ev)
+        ev_latex = sp.latex(ev)
         B = sm - ev * sp.eye(n)
         geo_mult = len(B.nullspace())
         table, B_mat = _dim_ker_powers(sm, ev, alg_mult)
-        nilpotent_tables[str(ev_exact)] = {
+        nil_index = max((row["k"] for row in table if row["dim_ker_Bk"] >= alg_mult), default=alg_mult)
+        max_nilpotent_index = max(max_nilpotent_index, nil_index)
+
+        nilpotent_tables[str(ev)] = {
+            "eigenvalue_latex": ev_latex,
             "B_matrix": matrix_to_list(B_mat),
             "B_matrix_latex": matrix_to_latex(B_mat),
             "table": table,
         }
-        nil_index = max((row["k"] for row in table if row["dim_ker_Bk"] >= alg_mult), default=alg_mult)
-        max_nilpotent_index = max(max_nilpotent_index, nil_index)
 
         eigen_analysis.append({
-            "eigenvalue": format_number(ev_exact),
-            "eigenvalue_latex": sp.latex(ev_exact),
+            "eigenvalue": format_number(ev),
+            "eigenvalue_latex": ev_latex,
             "algebraic_multiplicity": alg_mult,
             "geometric_multiplicity": geo_mult,
             "nilpotent_index": nil_index,
         })
 
         steps.append({
-            "title": f"特征值 λ={ev}",
-            "content": f"代数重数={alg_mult}, 几何重数={geo_mult}, B=A-λI",
+            "title": "特征值分析",
+            "latex": (
+                f"\\lambda = {ev_latex}:\\quad n_a = {alg_mult},\\ "
+                f"n_g = {geo_mult},\\ t = {nil_index},\\quad B = A - \\lambda I"
+            ),
         })
 
     P, J = sm.jordan_form()
