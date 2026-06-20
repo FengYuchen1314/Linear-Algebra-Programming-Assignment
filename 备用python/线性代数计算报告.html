@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>线性代数计算报告</title>
+<script>
+window.MathJax = {
+  tex: {
+    inlineMath: [['$', '$'], ['\\(', '\\)']],
+    displayMath: [['$$','$$'], ['\\[','\\]']],
+    packages: {'[+]': ['ams', 'newcommand', 'configmacros']}
+  },
+  svg: { fontCache: 'global' },
+  startup: {
+    pageReady: () => MathJax.startup.defaultPageReady().then(() => {
+      window.__mathjax_done = true;
+      window.__mathjax_count = document.querySelectorAll('.math-render mjx-container svg').length;
+    })
+  }
+};
+</script>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
+<style>
+  :root { --bg: #f4f6fb; --card: #fff; --accent: #3b5bdb; --muted: #64748b; --border: #e2e8f0; }
+  * { box-sizing: border-box; }
+  body { font-family: "PingFang SC", "Microsoft YaHei", sans-serif; background: var(--bg); color: #1e293b; margin: 0; padding: 24px; line-height: 1.6; }
+  .container { max-width: 960px; margin: 0 auto; }
+  header { background: linear-gradient(135deg, #364fc7, #5c7cfa); color: #fff; border-radius: 16px; padding: 28px 32px; margin-bottom: 24px; }
+  header h1 { margin: 0 0 8px; font-size: 1.75rem; }
+  header p { margin: 0; opacity: 0.9; }
+  .module { background: var(--card); border-radius: 12px; border: 1px solid var(--border); margin-bottom: 20px; overflow: hidden; box-shadow: 0 2px 8px rgba(15,23,42,.06); }
+  .module-head { padding: 16px 20px; border-bottom: 1px solid var(--border); background: #f8fafc; }
+  .module-head h2 { margin: 0; font-size: 1.15rem; color: var(--accent); }
+  .module-head .sub { color: var(--muted); font-size: 0.9rem; margin-top: 4px; }
+  .summary { padding: 12px 20px; background: #eff6ff; border-bottom: 1px solid var(--border); font-size: 0.92rem; }
+  .summary ul { margin: 6px 0 0; padding-left: 1.2rem; list-style: none; }
+  .summary li { margin-bottom: 8px; }
+  .summary-math { display: block; margin-top: 4px; padding: 6px 10px; background: #fff; border-radius: 6px; text-align: center; }
+  .subtitle-math { margin-top: 6px; text-align: center; }
+  .step { padding: 14px 20px; border-bottom: 1px solid var(--border); }
+  .step:last-child { border-bottom: none; }
+  .step-title { font-weight: 600; margin-bottom: 6px; }
+  .step-content { color: #334155; font-size: 0.92rem; margin-bottom: 8px; }
+  .math-render { overflow-x: auto; padding: 10px 12px; background: #f1f5f9; border-radius: 8px; font-size: 1.05rem; text-align: center; }
+  .math-render mjx-container { display: inline-block !important; }
+  .math-render svg { max-width: 100%; height: auto; }
+  .warn { padding: 10px 20px; background: #fffbeb; color: #92400e; font-size: 0.88rem; border-top: 1px solid #fde68a; }
+  .error { padding: 16px 20px; color: #b91c1c; background: #fef2f2; }
+  footer { text-align: center; color: var(--muted); font-size: 0.85rem; padding: 24px 0; }
+  @media print {
+    body { background: #fff; }
+    .math-render mjx-container, .math-render svg { display: inline-block !important; visibility: visible !important; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+<header>
+  <h1>线性代数编程作业 — 完整计算报告</h1>
+  <p>生成时间: 2026-06-20 18:31:14 · 含 Sturm 求根、矩阵性质、分解、Jordan 标准型、λ-矩阵法</p>
+</header>
+<section class="module" id="sec-1">
+<div class="module-head">
+<h2>1. Sturm 序列与求根</h2>
+<div class="sub">三次无重根多项式</div>
+<div class="subtitle-math">\[x^{3} - 2 x + 1\]</div>
+</div>
+<div class="summary"><strong>结果摘要</strong><ul><li><strong>多项式</strong><div class="summary-math">\[f(x)=x^{3} - 2 x + 1\]</div></li><li>实根区间: [[-1.68755625, -1.50005], [0.56251875, 0.750025], [0.93753125, 1.1250375]]</li><li>近似根 -1.6180339887（区间 -1.68755625 ~ -1.50005）</li><li>近似根 0.6180339887（区间 0.56251875 ~ 0.750025）</li><li>近似根 1（区间 0.93753125 ~ 1.1250375）</li></ul></div>
+<div class="step">
+<div class="step-title">1. 多项式与导数</div>
+<div class="math-render">\[f(x)=x^{3} - 2 x + 1,\quad f'(x)=3 x^{2} - 2\]</div>
+</div>
+<div class="step">
+<div class="step-title">2. 重根判别</div>
+<div class="math-render">\[\gcd(f,f')=1\]</div>
+</div>
+<div class="step">
+<div class="step-title">3. Sturm 序列</div>
+<div class="math-render">\[g_{0}=x^{3} - 2 x + 1,\quad g_{1}=3 x^{2} - 2,\quad g_{2}=\frac{4 x}{3} - 1,\quad g_{3}=\frac{5}{16}\]</div>
+</div>
+<div class="step">
+<div class="step-title">4. 实根界</div>
+<div class="math-render">\[L=-3.0001,\quad R=3.0001\]</div>
+</div>
+<div class="step">
+<div class="step-title">5. 区间 [-3.0001, 3.0001]</div>
+<div class="math-render">\[V(-3.0001) - V(3.0001) = 3 - 0 = 3\]</div>
+</div>
+<div class="step">
+<div class="step-title">6. 区间 [-3.0001, 0]</div>
+<div class="math-render">\[V(-3.0001) - V(0.0) = 3 - 2 = 1\]</div>
+</div>
+<div class="step">
+<div class="step-title">7. 区间 [0, 3.0001]</div>
+<div class="math-render">\[V(0.0) - V(3.0001) = 2 - 0 = 2\]</div>
+</div>
+<div class="step">
+<div class="step-title">8. 区间 [0, 1.50005]</div>
+<div class="math-render">\[V(0.0) - V(1.50005) = 2 - 0 = 2\]</div>
+</div>
+<div class="step">
+<div class="step-title">9. 区间 [0, 0.750025]</div>
+<div class="math-render">\[V(0.0) - V(0.750025) = 2 - 1 = 1\]</div>
+</div>
+<div class="step">
+<div class="step-title">10. 区间 [0.750025, 1.50005]</div>
+<div class="math-render">\[V(0.750025) - V(1.50005) = 1 - 0 = 1\]</div>
+</div>
+<div class="step">
+<div class="step-title">11. 区间 [1.50005, 3.0001]</div>
+<div class="math-render">\[V(1.50005) - V(3.0001) = 0 - 0 = 0\]</div>
+</div>
+<div class="step">
+<div class="step-title">12. 近似求根</div>
+<div class="math-render">\[\text{二分法精度}\ \varepsilon = 0.01\]</div>
+</div>
+</section>
+<section class="module" id="sec-2">
+<div class="module-head">
+<h2>2. Sturm 序列与求根</h2>
+<div class="sub">三次有重根多项式</div>
+<div class="subtitle-math">\[x^{3} - 3 x^{2} + 3 x - 1\]</div>
+</div>
+<div class="summary"><strong>结果摘要</strong><ul><li><strong>多项式</strong><div class="summary-math">\[f(x)=x^{3} - 3 x^{2} + 3 x - 1\]</div></li><li>实根区间: [[0.8749875, 1]]</li><li>近似根 1（区间 0.8749875 ~ 1）</li></ul></div>
+<div class="step">
+<div class="step-title">1. 多项式与导数</div>
+<div class="math-render">\[f(x)=x^{3} - 3 x^{2} + 3 x - 1,\quad f'(x)=3 x^{2} - 6 x + 3\]</div>
+</div>
+<div class="step">
+<div class="step-title">2. 重根判别</div>
+<div class="math-render">\[\gcd(f,f')=x^{2} - 2 x + 1 \neq 1,\quad f_{\mathrm{sf}}=x - 1\]</div>
+</div>
+<div class="step">
+<div class="step-title">3. Sturm 序列</div>
+<div class="math-render">\[g_{0}=x - 1,\quad g_{1}=1\]</div>
+</div>
+<div class="step">
+<div class="step-title">4. 实根界</div>
+<div class="math-render">\[L=-0.0001,\quad R=2.0001\]</div>
+</div>
+<div class="step">
+<div class="step-title">5. 区间 [-0.0001, 2.0001]</div>
+<div class="math-render">\[V(-0.0001) - V(2.0001) = 1 - 0 = 1\]</div>
+</div>
+<div class="step">
+<div class="step-title">6. 近似求根</div>
+<div class="math-render">\[\text{二分法精度}\ \varepsilon = 0.01\]</div>
+</div>
+<div class="warn">⚠ 多项式存在重根，使用 square-free 部分继续 Sturm 分析</div>
+</section>
+<section class="module" id="sec-3">
+<div class="module-head">
+<h2>3. 矩阵基本性质</h2>
+<div class="sub">三阶可逆矩阵 — 三阶可逆方阵</div>
+</div>
+<div class="summary"><strong>结果摘要</strong><ul><li>尺寸: 3×3, 秩: 3</li><li><strong>行列式</strong><div class="summary-math">\[\det(A)=13,\ \mathrm{tr}(A)=3\]</div></li><li>可逆: True, 可对角化: True</li><li><strong>特征多项式</strong><div class="summary-math">\[\lambda^{3} - 3 \lambda^{2} + 3 \lambda - 13\]</div></li><li><strong>特征值 3.289428</strong><div class="summary-math">\[\lambda=1 + \sqrt[3]{12}:\ n_a=1,\ n_g=1\]</div></li><li><strong>特征值 -0.144714 + 1.982703i</strong><div class="summary-math">\[\lambda=1 + \sqrt[3]{12} \left(- \frac{1}{2} + \frac{\sqrt{3} i}{2}\right):\ n_a=1,\ n_g=1\]</div></li><li><strong>特征值 -0.144714 - 1.982703i</strong><div class="summary-math">\[\lambda=1 + \sqrt[3]{12} \left(- \frac{1}{2} - \frac{\sqrt{3} i}{2}\right):\ n_a=1,\ n_g=1\]</div></li></ul></div>
+<div class="step">
+<div class="step-title">1. 行化简 (RREF)</div>
+<div class="math-render">\[\text{RREF}(A)=\left[\begin{matrix}1 & 0 & 0\\0 & 1 & 0\\0 & 0 & 1\end{matrix}\right]\]</div>
+</div>
+<div class="step">
+<div class="step-title">2. 逆矩阵验证</div>
+<div class="math-render">\[A^{-1}=\left[\begin{matrix}\frac{1}{13} & - \frac{2}{13} & \frac{6}{13}\\\frac{6}{13} & \frac{1}{13} & - \frac{3}{13}\\- \frac{2}{13} & \frac{4}{13} & \frac{1}{13}\end{matrix}\right]\]</div>
+</div>
+<div class="step">
+<div class="step-title">3. 特征多项式</div>
+<div class="math-render">\[\det(\lambda I - A)=\lambda^{3} - 3 \lambda^{2} + 3 \lambda - 13\]</div>
+</div>
+<div class="step">
+<div class="step-title">4. 可对角化判定</div>
+<div class="math-render">\[\text{可对角化：}\text{是}\]</div>
+</div>
+<div class="step">
+<div class="step-title">5. 迹与行列式验证</div>
+<div class="math-render">\[\sum \lambda_i = 3,\quad \prod \lambda_i = 13\]</div>
+</div>
+<div class="warn">⚠ 矩阵特征值非有理数，几何重数采用数值方法计算</div>
+</section>
+<section class="module" id="sec-4">
+<div class="module-head">
+<h2>4. 矩阵基本性质</h2>
+<div class="sub">三阶不可对角化矩阵 — 三阶不可对角化方阵</div>
+</div>
+<div class="summary"><strong>结果摘要</strong><ul><li>尺寸: 3×3, 秩: 3</li><li><strong>行列式</strong><div class="summary-math">\[\det(A)=8,\ \mathrm{tr}(A)=6\]</div></li><li>可逆: True, 可对角化: False</li><li><strong>特征多项式</strong><div class="summary-math">\[\lambda^{3} - 6 \lambda^{2} + 12 \lambda - 8\]</div></li><li><strong>特征值 2</strong><div class="summary-math">\[\lambda=2:\ n_a=3,\ n_g=1\]</div></li></ul></div>
+<div class="step">
+<div class="step-title">1. 行化简 (RREF)</div>
+<div class="math-render">\[\text{RREF}(A)=\left[\begin{matrix}1 & 0 & 0\\0 & 1 & 0\\0 & 0 & 1\end{matrix}\right]\]</div>
+</div>
+<div class="step">
+<div class="step-title">2. 逆矩阵验证</div>
+<div class="math-render">\[A^{-1}=\left[\begin{matrix}\frac{1}{2} & - \frac{1}{4} & \frac{1}{8}\\0 & \frac{1}{2} & - \frac{1}{4}\\0 & 0 & \frac{1}{2}\end{matrix}\right]\]</div>
+</div>
+<div class="step">
+<div class="step-title">3. 特征多项式</div>
+<div class="math-render">\[\det(\lambda I - A)=\lambda^{3} - 6 \lambda^{2} + 12 \lambda - 8\]</div>
+</div>
+<div class="step">
+<div class="step-title">4. 可对角化判定</div>
+<div class="math-render">\[\text{可对角化：}\text{否}\]</div>
+</div>
+<div class="step">
+<div class="step-title">5. 迹与行列式验证</div>
+<div class="math-render">\[\sum \lambda_i = 6,\quad \prod \lambda_i = 8\]</div>
+</div>
+</section>
+<section class="module" id="sec-5">
+<div class="module-head">
+<h2>5. 矩阵基本性质</h2>
+<div class="sub">3×4 行满秩矩阵 — 3×4 行满秩矩阵</div>
+</div>
+<div class="summary"><strong>结果摘要</strong><ul><li>尺寸: 3×4, 秩: 3</li><li>有左逆: False, 有右逆: True</li></ul></div>
+<div class="step">
+<div class="step-title">1. 行化简 (RREF)</div>
+<div class="math-render">\[\text{RREF}(A)=\left[\begin{matrix}1 & 0 & 0 & 1\\0 & 1 & 0 & 2\\0 & 0 & 1 & 3\end{matrix}\right]\]</div>
+</div>
+<div class="step">
+<div class="step-title">2. 右逆</div>
+<div class="math-render">\[R=\left[\begin{matrix}\frac{14}{15} & - \frac{2}{15} & - \frac{1}{5}\\- \frac{2}{15} & \frac{11}{15} & - \frac{2}{5}\\- \frac{1}{5} & - \frac{2}{5} & \frac{2}{5}\\\frac{1}{15} & \frac{2}{15} & \frac{1}{5}\end{matrix}\right]\]</div>
+</div>
+</section>
+<section class="module" id="sec-6">
+<div class="module-head">
+<h2>6. 矩阵分解</h2>
+<div class="sub">满秩分解 A=BC — 4×3 列满秩矩阵</div>
+</div>
+<div class="summary"><strong>结果摘要</strong><ul><li>秩: 3, 验证误差: 0</li></ul></div>
+<div class="step">
+<div class="step-title">1. Hermite 标准型 / RREF</div>
+<div class="math-render">\[H=\left[\begin{matrix}1 & 0 & 0\\0 & 1 & 0\\0 & 0 & 1\\0 & 0 & 0\end{matrix}\right]\]</div>
+</div>
+<div class="step">
+<div class="step-title">2. 满秩分解 A=BC</div>
+<div class="math-render">\[B=\left[\begin{matrix}1 & 0 & 0\\0 & 1 & 0\\0 & 0 & 1\\1 & 1 & 1\end{matrix}\right],\quad C=\left[\begin{matrix}1 & 0 & 0\\0 & 1 & 0\\0 & 0 & 1\end{matrix}\right]\]</div>
+</div>
+<div class="step">
+<div class="step-title">3. 验证 A=BC</div>
+<div class="math-render">\[A-BC=\left[\begin{matrix}0 & 0 & 0\\0 & 0 & 0\\0 & 0 & 0\\0 & 0 & 0\end{matrix}\right]\]</div>
+</div>
+</section>
+<section class="module" id="sec-7">
+<div class="module-head">
+<h2>7. 矩阵分解</h2>
+<div class="sub">LU / PLU 分解 — 三阶可逆矩阵</div>
+</div>
+<div class="summary"><strong>结果摘要</strong><ul><li>LU 分解, 验证误差: 0</li></ul></div>
+<div class="step">
+<div class="step-title">1. LU 分解</div>
+<div class="math-render">\[L=\left[\begin{matrix}1 & 0 & 0\\0 & 1 & 0\\2 & -4 & 1\end{matrix}\right],\quad U=\left[\begin{matrix}1 & 2 & 0\\0 & 1 & 3\\0 & 0 & 13\end{matrix}\right]\]</div>
+</div>
+<div class="step">
+<div class="step-title">2. 分解结果</div>
+<div class="math-render">\[L=\left[\begin{matrix}1 & 0 & 0\\0 & 1 & 0\\2 & -4 & 1\end{matrix}\right],\quad U=\left[\begin{matrix}1 & 2 & 0\\0 & 1 & 3\\0 & 0 & 13\end{matrix}\right]\]</div>
+</div>
+<div class="step">
+<div class="step-title">3. 验证 A=LU</div>
+<div class="math-render">\[A-LU=\left[\begin{matrix}0 & 0 & 0\\0 & 0 & 0\\0 & 0 & 0\end{matrix}\right]\]</div>
+</div>
+</section>
+<section class="module" id="sec-8">
+<div class="module-head">
+<h2>8. 矩阵分解</h2>
+<div class="sub">LDU 分解 — 三阶可逆矩阵</div>
+</div>
+<div class="summary"><strong>结果摘要</strong><ul><li>LDU 分解成功, 验证误差: 0</li></ul></div>
+<div class="step">
+<div class="step-title">1. LU 分解</div>
+<div class="math-render">\[L=\left[\begin{matrix}1 & 0 & 0\\0 & 1 & 0\\2 & -4 & 1\end{matrix}\right],\quad U=\left[\begin{matrix}1 & 2 & 0\\0 & 1 & 3\\0 & 0 & 13\end{matrix}\right]\]</div>
+</div>
+<div class="step">
+<div class="step-title">2. 分解结果</div>
+<div class="math-render">\[L=\left[\begin{matrix}1 & 0 & 0\\0 & 1 & 0\\2 & -4 & 1\end{matrix}\right],\quad U=\left[\begin{matrix}1 & 2 & 0\\0 & 1 & 3\\0 & 0 & 13\end{matrix}\right]\]</div>
+</div>
+<div class="step">
+<div class="step-title">3. 验证 A=LU</div>
+<div class="math-render">\[A-LU=\left[\begin{matrix}0 & 0 & 0\\0 & 0 & 0\\0 & 0 & 0\end{matrix}\right]\]</div>
+</div>
+<div class="step">
+<div class="step-title">4. LDU 分解</div>
+<div class="math-render">\[D=\left[\begin{matrix}1 & 0 & 0\\0 & 1 & 0\\0 & 0 & 13\end{matrix}\right],\quad U_1=\left[\begin{matrix}1 & 2 & 0\\0 & 1 & 3\\0 & 0 & 1\end{matrix}\right]\]</div>
+</div>
+<div class="step">
+<div class="step-title">5. 验证 A=LDU</div>
+<div class="math-render">\[A-LDU=\left[\begin{matrix}0 & 0 & 0\\0 & 0 & 0\\0 & 0 & 0\end{matrix}\right]\]</div>
+</div>
+</section>
+<section class="module" id="sec-9">
+<div class="module-head">
+<h2>9. 矩阵分解</h2>
+<div class="sub">SVD 分解 — 三阶可逆矩阵</div>
+</div>
+<div class="summary"><strong>结果摘要</strong><ul><li>奇异值: [3.5181986993, 2.17819408, 1.6963927793]</li><li>Frobenius 误差: 0</li></ul></div>
+<div class="step">
+<div class="step-title">1. SVD 方法</div>
+<div class="math-render">\[A^T A=\left[\begin{matrix}5 & 2 & 2\\2 & 5 & 3\\2 & 3 & 10\end{matrix}\right]\]</div>
+</div>
+<div class="step">
+<div class="step-title">2. AᵀA 特征多项式</div>
+<div class="math-render">\[\lambda^{3} - 20 \lambda^{2} + 108 \lambda - 169\]</div>
+</div>
+<div class="step">
+<div class="step-title">3. 数值 SVD 分解</div>
+<div class="step-content">U、Σ、Vᵀ 由 SciPy 数值计算</div>
+</div>
+<div class="step">
+<div class="step-title">4. 验证 ||A - UΣVᵀ||</div>
+<div class="step-content">Frobenius 范数误差: 0</div>
+</div>
+<div class="warn">⚠ 奇异值与 U、V 矩阵使用 SciPy 数值计算</div>
+</section>
+<section class="module" id="sec-10">
+<div class="module-head">
+<h2>10. Jordan 标准型</h2>
+<div class="sub">三阶不可对角化矩阵</div>
+</div>
+<div class="summary"><strong>结果摘要</strong><ul><li><strong>特征多项式</strong><div class="summary-math">\[\lambda^{3} - 6 \lambda^{2} + 12 \lambda - 8\]</div></li><li><strong>特征值 2</strong><div class="summary-math">\[\lambda=2:\ n_a=3,\ n_g=1,\ t=3\]</div></li><li>P⁻¹AP=J 验证误差: 0</li></ul></div>
+<div class="step">
+<div class="step-title">1. 特征多项式</div>
+<div class="math-render">\[\det(\lambda I - A) = \lambda^{3} - 6 \lambda^{2} + 12 \lambda - 8\]</div>
+</div>
+<div class="step">
+<div class="step-title">2. 特征值分析</div>
+<div class="math-render">\[\lambda = 2:\quad n_a = 3,\ n_g = 1,\ t = 3,\quad B = A - \lambda I\]</div>
+</div>
+<div class="step">
+<div class="step-title">3. Jordan 标准型</div>
+<div class="math-render">\[J=\left[\begin{matrix}2 & 1 & 0\\0 & 2 & 1\\0 & 0 & 2\end{matrix}\right],\quad P=\left[\begin{matrix}1 & 0 & 0\\0 & 1 & 0\\0 & 0 & 1\end{matrix}\right]\]</div>
+</div>
+<div class="step">
+<div class="step-title">4. 验证 P⁻¹AP=J</div>
+<div class="step-content">最大误差: 0</div>
+</div>
+</section>
+<section class="module" id="sec-11">
+<div class="module-head">
+<h2>11. Jordan 标准型</h2>
+<div class="sub">两个 Jordan 块</div>
+</div>
+<div class="summary"><strong>结果摘要</strong><ul><li><strong>特征多项式</strong><div class="summary-math">\[\lambda^{4} - 10 \lambda^{3} + 37 \lambda^{2} - 60 \lambda + 36\]</div></li><li><strong>特征值 2</strong><div class="summary-math">\[\lambda=2:\ n_a=2,\ n_g=1,\ t=2\]</div></li><li><strong>特征值 3</strong><div class="summary-math">\[\lambda=3:\ n_a=2,\ n_g=1,\ t=2\]</div></li><li>P⁻¹AP=J 验证误差: 0</li></ul></div>
+<div class="step">
+<div class="step-title">1. 特征多项式</div>
+<div class="math-render">\[\det(\lambda I - A) = \lambda^{4} - 10 \lambda^{3} + 37 \lambda^{2} - 60 \lambda + 36\]</div>
+</div>
+<div class="step">
+<div class="step-title">2. 特征值分析</div>
+<div class="math-render">\[\lambda = 2:\quad n_a = 2,\ n_g = 1,\ t = 2,\quad B = A - \lambda I\]</div>
+</div>
+<div class="step">
+<div class="step-title">3. 特征值分析</div>
+<div class="math-render">\[\lambda = 3:\quad n_a = 2,\ n_g = 1,\ t = 2,\quad B = A - \lambda I\]</div>
+</div>
+<div class="step">
+<div class="step-title">4. Jordan 标准型</div>
+<div class="math-render">\[J=\left[\begin{matrix}2 & 1 & 0 & 0\\0 & 2 & 0 & 0\\0 & 0 & 3 & 1\\0 & 0 & 0 & 3\end{matrix}\right],\quad P=\left[\begin{matrix}1 & 0 & 0 & 0\\0 & 1 & 0 & 0\\0 & 0 & 1 & 0\\0 & 0 & 0 & 1\end{matrix}\right]\]</div>
+</div>
+<div class="step">
+<div class="step-title">5. 验证 P⁻¹AP=J</div>
+<div class="step-content">最大误差: 0</div>
+</div>
+</section>
+<section class="module" id="sec-12">
+<div class="module-head">
+<h2>12. λ-矩阵法（Smith 标准型）</h2>
+<div class="sub">三阶不可对角化矩阵</div>
+</div>
+<div class="summary"><strong>结果摘要</strong><ul><li><strong>不变因子</strong><div class="summary-math">\[1,\quad 1,\quad \lambda^{3} - 6 \lambda^{2} + 12 \lambda - 8\]</div></li><li><strong>初等因子</strong><div class="summary-math">\[\lambda^{3} - 6 \lambda^{2} + 12 \lambda - 8\]</div></li><li><strong>最小多项式</strong><div class="summary-math">\[\lambda^{3} - 6 \lambda^{2} + 12 \lambda - 8\]</div></li><li>可对角化: False</li></ul></div>
+<div class="step">
+<div class="step-title">1. 特征矩阵 λI-A</div>
+<div class="math-render">\[\lambda I - A = \left[\begin{matrix}\lambda - 2 & -1 & 0\\0 & \lambda - 2 & -1\\0 & 0 & \lambda - 2\end{matrix}\right]\]</div>
+</div>
+<div class="step">
+<div class="step-title">2. Smith 标准型</div>
+<div class="math-render">\[S=\left[\begin{matrix}1 & 0 & 0\\0 & 1 & 0\\0 & 0 & \lambda^{3} - 6 \lambda^{2} + 12 \lambda - 8\end{matrix}\right]\]</div>
+</div>
+<div class="step">
+<div class="step-title">3. 不变因子</div>
+<div class="math-render">\[d_{1}(\lambda)=1,\quad d_{2}(\lambda)=1,\quad d_{3}(\lambda)=\lambda^{3} - 6 \lambda^{2} + 12 \lambda - 8\]</div>
+</div>
+<div class="step">
+<div class="step-title">4. 初等因子组</div>
+<div class="math-render">\[\lambda^{3} - 6 \lambda^{2} + 12 \lambda - 8\]</div>
+</div>
+<div class="step">
+<div class="step-title">5. Jordan 块（由初等因子）</div>
+<div class="math-render">\[\lambda^{3} - 6 \lambda^{2} + 12 \lambda - 8 \rightarrow J_{3}\]</div>
+</div>
+</section>
+<section class="module" id="sec-13">
+<div class="module-head">
+<h2>13. λ-矩阵法（Smith 标准型）</h2>
+<div class="sub">三阶幂零矩阵</div>
+</div>
+<div class="summary"><strong>结果摘要</strong><ul><li><strong>不变因子</strong><div class="summary-math">\[1,\quad 1,\quad \lambda^{3}\]</div></li><li><strong>初等因子</strong><div class="summary-math">\[\lambda^{3}\]</div></li><li><strong>最小多项式</strong><div class="summary-math">\[\lambda^{3}\]</div></li><li>可对角化: False</li></ul></div>
+<div class="step">
+<div class="step-title">1. 特征矩阵 λI-A</div>
+<div class="math-render">\[\lambda I - A = \left[\begin{matrix}\lambda & -1 & 0\\0 & \lambda & -1\\0 & 0 & \lambda\end{matrix}\right]\]</div>
+</div>
+<div class="step">
+<div class="step-title">2. Smith 标准型</div>
+<div class="math-render">\[S=\left[\begin{matrix}1 & 0 & 0\\0 & 1 & 0\\0 & 0 & \lambda^{3}\end{matrix}\right]\]</div>
+</div>
+<div class="step">
+<div class="step-title">3. 不变因子</div>
+<div class="math-render">\[d_{1}(\lambda)=1,\quad d_{2}(\lambda)=1,\quad d_{3}(\lambda)=\lambda^{3}\]</div>
+</div>
+<div class="step">
+<div class="step-title">4. 初等因子组</div>
+<div class="math-render">\[\lambda^{3}\]</div>
+</div>
+<div class="step">
+<div class="step-title">5. Jordan 块（由初等因子）</div>
+<div class="math-render">\[\lambda^{3} \rightarrow J_{3}\]</div>
+</div>
+</section>
+<footer>Linear Algebra Programming Assignment · 备用 Python 脚本自动生成</footer>
+</div>
+</body>
+</html>
