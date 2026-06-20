@@ -47,7 +47,9 @@ export default function SturmPage() {
                 <PolynomialPreview expr={r.polynomial} label="f(x)" />
                 <PolynomialPreview expr={r.derivative} label="f'(x)" />
                 <PolynomialPreview expr={r.gcd_f_fprime} label={"\\gcd(f,f')"} />
-                <MathLine tex={r.has_multiple_roots ? "\\gcd(f,f') \\neq 1" : "\\gcd(f,f') = 1"} />
+                {r.has_multiple_roots && (
+                  <MathLine tex={"\\gcd(f,f') \\neq 1"} />
+                )}
                 {r.squarefree_polynomial && (
                   <PolynomialPreview expr={r.squarefree_polynomial} label={'f_{\\mathrm{sf}}(x)'} />
                 )}
