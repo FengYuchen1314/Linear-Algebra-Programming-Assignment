@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { Routes, Route, NavLink, useLocation } from 'react-router-dom';
 import SturmPage from './pages/SturmPage';
 import MatrixPropertiesPage from './pages/MatrixPropertiesPage';
@@ -15,8 +14,6 @@ import {
   IconDecompose,
   IconJordan,
   IconLambda,
-  IconMenu,
-  IconClose,
 } from './components/ui/Icons';
 
 const navItems = [
@@ -32,11 +29,11 @@ function DisplayPrecisionControl() {
   const valid = Number.isFinite(Number(precision)) && Number(precision) > 0;
 
   return (
-    <div className="md-text-field md-text-field--compact display-precision-control">
-      <label className="md-label-medium" htmlFor="global-display-precision">显示精度</label>
+    <div className="field-inline display-precision-control">
+      <label className="text-label" htmlFor="global-display-precision">显示精度</label>
       <input
         id="global-display-precision"
-        className="md-outlined-input"
+        className="input input--sm"
         type="number"
         min="1e-12"
         step="any"
@@ -44,51 +41,43 @@ function DisplayPrecisionControl() {
         onChange={(e) => setPrecision(e.target.value)}
         title="仅影响浮点近似值的显示；分数、根号等精确值不变"
       />
-      {!valid && <span className="precision-hint md-body-small">须为正数</span>}
+      {!valid && <span className="precision-hint text-muted">须为正数</span>}
     </div>
   );
 }
 
-function NavigationDrawer({ open, onClose }) {
+function Sidebar() {
   return (
-    <>
-      <div
-        className={`md-scrim md-navigation-drawer__scrim ${open ? 'is-visible' : ''}`}
-        onClick={onClose}
-        aria-hidden={!open}
-      />
-      <aside className={`md-navigation-drawer ${open ? 'is-open' : ''}`} aria-label="导航抽屉">
-        <div className="md-navigation-drawer__header">
-          <span className="md-label-medium md-navigation-drawer__overline">Linear Algebra</span>
-          <h1 className="md-headline-small">线性代数编程作业</h1>
-          <p className="md-body-medium md-navigation-drawer__subtitle">符号计算与数值分析</p>
+    <aside className="sidebar" aria-label="主导航">
+      <div className="sidebar__brand">
+        <div className="sidebar__logo">LA</div>
+        <div>
+          <h1 className="sidebar__title">Linear Algebra</h1>
+          <p className="sidebar__tagline text-muted">符号计算工作台</p>
         </div>
-        <nav className="md-navigation-drawer__content" aria-label="主导航">
-          {navItems.map(({ path, label, desc, Icon }) => (
-            <NavLink
-              key={path}
-              to={path}
-              end={path === '/'}
-              className={({ isActive }) =>
-                `md-navigation-drawer__item md-state-layer${isActive ? ' is-active' : ''}`
-              }
-              onClick={onClose}
-            >
-              <span className="md-navigation-drawer__item-icon" aria-hidden><Icon /></span>
-              <span className="md-navigation-drawer__item-text">
-                <span className="md-label-large">{label}</span>
-                <span className="md-body-small md-navigation-drawer__item-desc">{desc}</span>
-              </span>
-            </NavLink>
-          ))}
-        </nav>
-        <div className="md-navigation-drawer__footer md-body-small">SymPy · MathJax · React</div>
-      </aside>
-    </>
+      </div>
+      <nav className="sidebar__nav" aria-label="页面导航">
+        {navItems.map(({ path, label, desc, Icon }) => (
+          <NavLink
+            key={path}
+            to={path}
+            end={path === '/'}
+            className={({ isActive }) => `sidebar__link${isActive ? ' is-active' : ''}`}
+          >
+            <span className="sidebar__link-icon" aria-hidden><Icon /></span>
+            <span className="sidebar__link-text">
+              <span className="sidebar__link-label">{label}</span>
+              <span className="sidebar__link-desc">{desc}</span>
+            </span>
+          </NavLink>
+        ))}
+      </nav>
+      <div className="sidebar__footer text-muted">SymPy · MathJax · React</div>
+    </aside>
   );
 }
 
-function TopAppBar({ onMenuToggle, sidebarOpen }) {
+function Topbar() {
   const location = useLocation();
   const current = navItems.find((item) => (
     item.path === '/'
@@ -97,19 +86,11 @@ function TopAppBar({ onMenuToggle, sidebarOpen }) {
   ));
 
   return (
-    <header className="md-top-app-bar">
-      <div className="md-top-app-bar__leading">
-        <button
-          type="button"
-          className="md-icon-button md-state-layer md-top-app-bar__menu"
-          onClick={onMenuToggle}
-          aria-label={sidebarOpen ? '关闭导航' : '打开导航'}
-        >
-          {sidebarOpen ? <IconClose /> : <IconMenu />}
-        </button>
-        <h2 className="md-title-medium md-top-app-bar__title">{current?.label}</h2>
+    <header className="topbar">
+      <div className="topbar__leading">
+        <h2 className="topbar__title">{current?.label}</h2>
       </div>
-      <div className="md-top-app-bar__trailing">
+      <div className="topbar__trailing">
         <DisplayPrecisionControl />
       </div>
     </header>
@@ -132,17 +113,12 @@ function AppRoutes() {
 }
 
 export default function App() {
-  const [drawerOpen, setDrawerOpen] = useState(false);
-
   return (
     <DisplayPrecisionProvider>
       <div className="app">
-        <NavigationDrawer open={drawerOpen} onClose={() => setDrawerOpen(false)} />
+        <Sidebar />
         <div className="app-content">
-          <TopAppBar
-            onMenuToggle={() => setDrawerOpen((v) => !v)}
-            sidebarOpen={drawerOpen}
-          />
+          <Topbar />
           <AppRoutes />
         </div>
       </div>

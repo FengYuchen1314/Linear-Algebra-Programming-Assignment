@@ -1,33 +1,42 @@
 export default function Button({
   children,
-  variant = 'filled',
+  variant = 'primary',
   size = 'md',
   icon,
-  loading,
+  loading = false,
+  disabled = false,
   className = '',
+  type = 'button',
   ...props
 }) {
-  const resolved = variant === 'primary' ? 'filled'
-    : variant === 'secondary' ? 'tonal'
-      : variant;
+  const resolved = variant === 'filled' ? 'primary'
+    : variant === 'tonal' ? 'secondary'
+      : variant === 'outlined' ? 'outline'
+        : variant === 'text' ? 'ghost'
+          : variant;
 
   const cls = [
-    'md-button',
-    `md-button--${resolved}`,
-    size === 'sm' ? 'md-button--sm' : '',
-    'md-state-layer',
-    loading ? 'md-button--loading' : '',
+    'btn',
+    `btn--${resolved}`,
+    size === 'sm' ? 'btn--sm' : '',
+    loading ? 'btn--loading' : '',
     className,
   ]
     .filter(Boolean)
     .join(' ');
 
   return (
-    <button type="button" className={cls} disabled={loading || props.disabled} {...props}>
-      {loading ? <span className="md-button__spinner" aria-hidden /> : icon && (
-        <span className="md-button__icon" aria-hidden>{icon}</span>
+    <button
+      type={type}
+      className={cls}
+      disabled={disabled || loading}
+      aria-busy={loading || undefined}
+      {...props}
+    >
+      {loading ? <span className="btn__spinner" aria-hidden /> : icon && (
+        <span className="btn__icon" aria-hidden>{icon}</span>
       )}
-      <span className="md-button__label">{loading ? '计算中…' : children}</span>
+      <span className="btn__label">{loading ? '计算中…' : children}</span>
     </button>
   );
 }

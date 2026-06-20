@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { IconClose } from './Icons';
 
 export default function Modal({ open, onClose, title, children, size = 'lg' }) {
@@ -23,29 +24,30 @@ export default function Modal({ open, onClose, title, children, size = 'lg' }) {
 
   if (!open) return null;
 
-  return (
-    <div className="md-dialog__scrim" role="presentation" onClick={onClose}>
+  return createPortal(
+    <div className="modal-overlay" role="presentation" onClick={onClose}>
       <div
         ref={dialogRef}
-        className={`md-dialog md-dialog--${size}`}
+        className={`modal modal--${size}`}
         role="dialog"
         aria-modal="true"
         aria-labelledby="modal-title"
         onClick={(e) => e.stopPropagation()}
       >
-        <header className="md-dialog__header">
-          <h2 id="modal-title" className="md-headline-small">{title}</h2>
+        <header className="modal__header">
+          <h2 id="modal-title" className="text-h3">{title}</h2>
           <button
             type="button"
-            className="md-icon-button md-state-layer md-dialog__close"
+            className="icon-btn modal__close"
             onClick={onClose}
             aria-label="关闭"
           >
             <IconClose />
           </button>
         </header>
-        <div className="md-dialog__content">{children}</div>
+        <div className="modal__body">{children}</div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }

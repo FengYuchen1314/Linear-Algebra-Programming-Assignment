@@ -72,11 +72,13 @@ export default function MatrixSourceSelector({
     setError(null);
   };
 
+  const canGenerate = requirement.trim().length > 0;
+
   return (
     <div className="source-selector">
       <div className="source-selector-header">
-        <h3 className="md-title-medium">选择矩阵</h3>
-        <p className="md-body-medium">从矩阵库选取，或使用 DeepSeek 根据描述生成</p>
+        <h3 className="text-h4">选择矩阵</h3>
+        <p className="text-body">从矩阵库选取，或使用 DeepSeek 根据描述生成</p>
       </div>
 
       <div className="source-actions">
@@ -91,9 +93,9 @@ export default function MatrixSourceSelector({
       {selected && (
         <SelectedBanner>
           <MatrixPreview matrix={selected.matrix || selected.item?.matrix} />
-          {selected.item?.name && <p className="selected-name md-body-small">{selected.item.name}</p>}
+          {selected.item?.name && <p className="selected-name text-muted">{selected.item.name}</p>}
           {selected.description && !selected.item?.name && (
-            <p className="selected-name md-body-small">{selected.description}</p>
+            <p className="selected-name text-muted">{selected.description}</p>
           )}
         </SelectedBanner>
       )}
@@ -108,11 +110,11 @@ export default function MatrixSourceSelector({
 
       <Modal open={generateOpen} onClose={closeGenerateModal} title="AI 生成矩阵" size="md">
         <div className="generate-panel">
-          <p className="md-body-medium generate-panel-hint">
+          <p className="text-body generate-panel-hint">
             用自然语言描述矩阵特征，例如维度、可逆性、Jordan 结构等。
           </p>
           <textarea
-            className="md-outlined-input"
+            className="input"
             placeholder="例如：给我一个三阶可对角化、特征值为 1,2,3 的矩阵"
             value={requirement}
             onChange={(e) => setRequirement(e.target.value)}
@@ -120,24 +122,37 @@ export default function MatrixSourceSelector({
             disabled={loading}
           />
           <GenerateStatus loading={loading} error={error && !generated ? error : null} entityLabel="矩阵" />
-          {!loading && (
-            <div className="modal-actions">
-              <Button variant="text" onClick={closeGenerateModal}>取消</Button>
-              <Button loading={loading} onClick={handleGenerate} disabled={!requirement.trim()}>
-                开始生成
-              </Button>
-            </div>
-          )}
           {generated && !loading && (
             <div className="preview-box">
-              <p className="md-label-medium preview-box-label">生成预览</p>
+              <p className="text-label preview-box-label">生成预览</p>
               <MatrixPreview matrix={generated.matrix} />
-              <p className="md-body-medium">{generated.description}</p>
-              <Button onClick={confirmGenerated}>
-                确认使用并分析
-              </Button>
+              <p className="text-body">{generated.description}</p>
             </div>
           )}
+          <div className="generate-panel__footer modal-actions">
+            {generated && !loading ? (
+              <>
+                <Button variant="ghost" onClick={() => { setGenerated(null); setError(null); }}>
+                  重新生成
+                </Button>
+                <Button onClick={confirmGenerated}>确认使用并分析</Button>
+              </>
+            ) : (
+              <>
+                <Button variant="ghost" onClick={closeGenerateModal} disabled={loading}>
+                  取消
+                </Button>
+                <Button
+                  onClick={handleGenerate}
+                  loading={loading}
+                  disabled={!canGenerate}
+                  title={canGenerate ? undefined : '请先输入描述'}
+                >
+                  开始生成
+                </Button>
+              </>
+            )}
+          </div>
         </div>
       </Modal>
     </div>
@@ -183,16 +198,16 @@ function MatrixLibrarySelector({ onSelect, selected, squareOnly }) {
         )}
         <input
           type="search"
-          className="library-search md-outlined-input"
+          className="library-search input"
           placeholder="搜索名称、标签或描述…"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
         />
       </div>
       {loading ? (
-        <p className="loading-text md-body-medium">加载矩阵库…</p>
+        <p className="loading-text text-muted">加载矩阵库…</p>
       ) : filtered.length === 0 ? (
-        <p className="roots-empty md-body-medium">没有匹配的矩阵</p>
+        <p className="roots-empty text-muted">没有匹配的矩阵</p>
       ) : (
         <div className="library-grid library-grid--modal">
           {filtered.map((m) => (
@@ -204,11 +219,11 @@ function MatrixLibrarySelector({ onSelect, selected, squareOnly }) {
               onClick={() => onSelect({ source: 'library', matrix_id: m.id, item: m, matrix: m.matrix })}
               onKeyDown={(e) => e.key === 'Enter' && onSelect({ source: 'library', matrix_id: m.id, item: m, matrix: m.matrix })}
             >
-              <h4 className="md-title-small">{m.name}</h4>
-              <p className="meta md-label-medium">{m.rows}×{m.cols}</p>
+              <h4 className="text-h4">{m.name}</h4>
+              <p className="meta text-label">{m.rows}×{m.cols}</p>
               <MatrixPreview matrix={m.matrix} compact />
               <div className="tags">{m.tags?.map((t) => <span key={t} className="tag">{t}</span>)}</div>
-              <p className="desc md-body-small">{m.description}</p>
+              <p className="desc text-muted">{m.description}</p>
             </div>
           ))}
         </div>

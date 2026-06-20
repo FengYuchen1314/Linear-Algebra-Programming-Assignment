@@ -63,11 +63,13 @@ export default function PolynomialSourceSelector({ onSelect, onConfirmAndAnalyze
     setError(null);
   };
 
+  const canGenerate = requirement.trim().length > 0;
+
   return (
     <div className="source-selector">
       <div className="source-selector-header">
-        <h3 className="md-title-medium">选择多项式</h3>
-        <p className="md-body-medium">从多项式库选取，或使用 DeepSeek 根据描述生成</p>
+        <h3 className="text-h4">选择多项式</h3>
+        <p className="text-body">从多项式库选取，或使用 DeepSeek 根据描述生成</p>
       </div>
 
       <div className="source-actions">
@@ -82,9 +84,9 @@ export default function PolynomialSourceSelector({ onSelect, onConfirmAndAnalyze
       {selected && (
         <SelectedBanner>
           <PolynomialPreview expr={selected.polynomial || selected.item?.polynomial} label="f(x)" />
-          {selected.item?.name && <p className="selected-name md-body-small">{selected.item.name}</p>}
+          {selected.item?.name && <p className="selected-name text-muted">{selected.item.name}</p>}
           {selected.description && !selected.item?.name && (
-            <p className="selected-name md-body-small">{selected.description}</p>
+            <p className="selected-name text-muted">{selected.description}</p>
           )}
         </SelectedBanner>
       )}
@@ -95,11 +97,11 @@ export default function PolynomialSourceSelector({ onSelect, onConfirmAndAnalyze
 
       <Modal open={generateOpen} onClose={closeGenerateModal} title="AI 生成多项式" size="md">
         <div className="generate-panel">
-          <p className="md-body-medium generate-panel-hint">
+          <p className="text-body generate-panel-hint">
             用自然语言描述多项式特征，例如次数、实根个数、是否有重根等。
           </p>
           <textarea
-            className="md-outlined-input"
+            className="input"
             placeholder="例如：给我一个三次无重根、有三个不同实根的多项式"
             value={requirement}
             onChange={(e) => setRequirement(e.target.value)}
@@ -107,25 +109,40 @@ export default function PolynomialSourceSelector({ onSelect, onConfirmAndAnalyze
             disabled={loading}
           />
           <GenerateStatus loading={loading} error={error && !generated ? error : null} entityLabel="多项式" />
-          {!loading && (
-            <div className="modal-actions">
-              <Button variant="text" onClick={closeGenerateModal}>取消</Button>
-              <Button loading={loading} onClick={handleGenerate} disabled={!requirement.trim()}>
-                开始生成
-              </Button>
-            </div>
-          )}
           {generated && !loading && (
             <div className="preview-box">
-              <p className="md-label-medium preview-box-label">生成预览</p>
+              <p className="text-label preview-box-label">生成预览</p>
               <PolynomialPreview expr={generated.polynomial} label="f(x)" />
-              <p className="md-body-medium">{generated.description}</p>
+              <p className="text-body">{generated.description}</p>
               {generated.warnings?.map((w, i) => (
-                <p key={i} className="warning-msg md-body-small">{w}</p>
+                <p key={i} className="warning-msg text-muted">{w}</p>
               ))}
-              <Button onClick={confirmGenerated}>确认使用并分析</Button>
             </div>
           )}
+          <div className="generate-panel__footer modal-actions">
+            {generated && !loading ? (
+              <>
+                <Button variant="ghost" onClick={() => { setGenerated(null); setError(null); }}>
+                  重新生成
+                </Button>
+                <Button onClick={confirmGenerated}>确认使用并分析</Button>
+              </>
+            ) : (
+              <>
+                <Button variant="ghost" onClick={closeGenerateModal} disabled={loading}>
+                  取消
+                </Button>
+                <Button
+                  onClick={handleGenerate}
+                  loading={loading}
+                  disabled={!canGenerate}
+                  title={canGenerate ? undefined : '请先输入描述'}
+                >
+                  开始生成
+                </Button>
+              </>
+            )}
+          </div>
         </div>
       </Modal>
     </div>
@@ -153,21 +170,21 @@ function PolynomialLibrarySelector({ onSelect, selected }) {
     });
   }, [polynomials, query]);
 
-  if (loading) return <p className="loading-text md-body-medium">加载多项式库…</p>;
+  if (loading) return <p className="loading-text text-muted">加载多项式库…</p>;
 
   return (
     <div className="library-browser">
       <div className="library-toolbar">
         <input
           type="search"
-          className="library-search md-outlined-input"
+          className="library-search input"
           placeholder="搜索名称、次数、标签或描述…"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
         />
       </div>
       {filtered.length === 0 ? (
-        <p className="roots-empty md-body-medium">没有匹配的多项式</p>
+        <p className="roots-empty text-muted">没有匹配的多项式</p>
       ) : (
         <div className="library-grid library-grid--modal">
           {filtered.map((p) => (
@@ -179,11 +196,11 @@ function PolynomialLibrarySelector({ onSelect, selected }) {
               onClick={() => onSelect({ source: 'library', polynomial_id: p.id, item: p, polynomial: p.polynomial })}
               onKeyDown={(e) => e.key === 'Enter' && onSelect({ source: 'library', polynomial_id: p.id, item: p, polynomial: p.polynomial })}
             >
-              <h4 className="md-title-small">{p.name}</h4>
-              <p className="meta md-label-medium">次数 {p.degree}</p>
+              <h4 className="text-h4">{p.name}</h4>
+              <p className="meta text-label">次数 {p.degree}</p>
               <PolynomialPreview expr={p.polynomial} label="f(x)" />
               <div className="tags">{p.tags?.map((t) => <span key={t} className="tag">{t}</span>)}</div>
-              <p className="desc md-body-small">{p.description}</p>
+              <p className="desc text-muted">{p.description}</p>
             </div>
           ))}
         </div>

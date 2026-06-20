@@ -13,7 +13,11 @@ INTERIOR_OFFSET = 1e-8
 
 
 def _fval(f, x):
-    return float(sp.N(f.subs(X, x), 15))
+    return float(sp.N(f.subs(X, x), 50))
+
+
+def _fprime(f):
+    return sp.expand(sp.diff(f, X))
 
 
 def _is_root(f, x):
@@ -53,7 +57,7 @@ def _sign_variations(values):
 
 
 def _eval_sturm(sequence, c):
-    return [float(sp.N(g.subs(X, c), 15)) for g in sequence]
+    return [float(sp.N(g.subs(X, c), 50)) for g in sequence]
 
 
 def _positive_root_bound(f):
@@ -129,7 +133,86 @@ def _dedupe_intervals(intervals):
         key = round(center, 8)
         if key not in by_center:
             by_center[key] = [lo, hi]
+        else:
+            prev = by_center[key]
+            by_center[key] = [min(prev[0], lo), max(prev[1], hi)]
     return [by_center[k] for k in sorted(by_center)]
+
+
+def _refine_interval(f, sequence, left, right, max_width):
+    """Shrink an interval known to contain one root to width <= max_width."""
+    lo, hi = left, right
+    flo, fhi = _fval(f, lo), _fval(f, hi)
+
+    if abs(flo) < ROOT_TOL:
+        return lo, min(hi, lo + max_width)
+    if abs(fhi) < ROOT_TOL:
+        return max(lo, hi - max_width), hi
+
+    guard = 0
+    while hi - lo > max_width and guard < 200:
+        guard += 1
+        mid = (lo + hi) / 2
+        fmid = _fval(f, mid)
+
+        if abs(fmid) < ROOT_TOL:
+            if mid - lo <= hi - mid:
+                hi = mid
+                fhi = fmid
+            else:
+                lo = mid
+                flo = fmid
+            continue
+
+        if flo * fhi <= 0:
+            if flo * fmid <= 0:
+                hi, fhi = mid, fmid
+            else:
+                lo, flo = mid, fmid
+            continue
+
+        count_left, _, _ = _count_roots_in_interval(sequence, lo, mid)
+        if count_left >= 1:
+            hi = mid
+        else:
+            lo = mid
+
+    return lo, hi
+
+
+def _best_sample(f, left, right, samples=24):
+    if right - left < 1e-14:
+        return left
+    best_x = left
+    best_v = abs(_fval(f, left))
+    for i in range(samples + 1):
+        x = left + (right - left) * i / samples
+        v = abs(_fval(f, x))
+        if v < best_v:
+            best_v = v
+            best_x = x
+    return best_x
+
+
+def _polish_newton(f, f_prime, x0, left, right, precision):
+    """Refine a root estimate with damped Newton, clamped to the bracket."""
+    x = x0
+    tol = min(ROOT_TOL, precision / 10)
+    for _ in range(40):
+        fx = _fval(f, x)
+        if abs(fx) < tol:
+            return x
+        fpx = _fval(f_prime, x)
+        if abs(fpx) < 1e-15:
+            break
+        step = fx / fpx
+        x_next = x - step
+        if x_next <= left or x_next >= right:
+            break
+        if abs(x_next - x) < tol:
+            return x_next
+        x = x_next
+    return _best_sample(f, left, right, 32)
 
 
 def _isolate_roots(f, sequence, left, right, intervals, steps):
@@ -171,40 +254,36 @@ def _isolate_roots(f, sequence, left, right, intervals, steps):
 
 
 def _bisect_root(f, left, right, precision):
-    """Refine an isolated interval to approximate a simple real root."""
+    """Refine an isolated interval to a simple real root."""
+    f_prime = _fprime(f)
     a, b = left, right
-    if b - a <= precision:
-        return (a + b) / 2
+    tol = min(ROOT_TOL, precision / 10)
+
     if abs(b - a) < 1e-14:
         return a
 
-    fa = _fval(f, a)
-    fb = _fval(f, b)
-
-    if abs(fa) < ROOT_TOL:
+    fa, fb = _fval(f, a), _fval(f, b)
+    if abs(fa) < tol:
         return a
-    if abs(fb) < ROOT_TOL:
+    if abs(fb) < tol:
         return b
 
     if fa * fb > 0:
-        mid = (a + b) / 2
-        fm = _fval(f, mid)
-        if abs(fm) < ROOT_TOL:
-            return mid
-        candidates = [(a, fa), (mid, fm), (b, fb)]
-        x_best, _ = min(candidates, key=lambda t: abs(t[1]))
-        return x_best
+        guess = _best_sample(f, a, b, 32)
+        return _polish_newton(f, f_prime, guess, a, b, precision)
 
     while b - a > precision:
         mid = (a + b) / 2
         fm = _fval(f, mid)
-        if abs(fm) < ROOT_TOL:
+        if abs(fm) < tol:
             return mid
         if fa * fm <= 0:
             b, fb = mid, fm
         else:
             a, fa = mid, fm
-    return (a + b) / 2
+
+    guess = _best_sample(f, a, b, 16)
+    return _polish_newton(f, f_prime, guess, a, b, precision)
 
 
 def compute_sturm(f_expr, precision=DEFAULT_PRECISION):
@@ -264,6 +343,16 @@ def compute_sturm(f_expr, precision=DEFAULT_PRECISION):
     intervals = []
     _isolate_roots(work_f, sequence, L, R, intervals, steps)
     intervals = _dedupe_intervals(intervals)
+
+    bracket_width = max(precision * 4, 0.25)
+    tightened = []
+    for lo, hi in intervals:
+        if abs(lo - hi) < 1e-14:
+            tightened.append([lo, hi])
+        else:
+            rlo, rhi = _refine_interval(work_f, sequence, lo, hi, bracket_width)
+            tightened.append([rlo, rhi])
+    intervals = tightened
 
     approx_roots = []
     for lo, hi in intervals:
