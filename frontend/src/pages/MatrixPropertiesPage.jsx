@@ -57,8 +57,9 @@ export default function MatrixPropertiesPage() {
         </ActionPanel>
       </WorkflowSection>
 
-      {result && (
-        <ResultsSection>
+      <ResultsSection>
+        {result && (
+          <>
           <ErrorBlock errors={result.errors} />
           <WarningBlock warnings={result.warnings} />
           {result.success && r && (
@@ -97,8 +98,9 @@ export default function MatrixPropertiesPage() {
               <StepBlock steps={result.steps} />
             </>
           )}
-        </ResultsSection>
-      )}
+          </>
+          )}
+      </ResultsSection>
     </PageLayout>
   );
 }

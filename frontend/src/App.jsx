@@ -1,4 +1,4 @@
-import { Routes, Route, NavLink, useLocation } from 'react-router-dom';
+import { Routes, Route, NavLink } from 'react-router-dom';
 import SturmPage from './pages/SturmPage';
 import MatrixPropertiesPage from './pages/MatrixPropertiesPage';
 import DecompositionPage from './pages/DecompositionPage';
@@ -17,11 +17,11 @@ import {
 } from './components/ui/Icons';
 
 const navItems = [
-  { path: '/', label: 'Sturm 序列', desc: '多项式实根隔离与近似', Icon: IconSturm },
-  { path: '/matrix-properties', label: '矩阵性质', desc: '秩、行列式、特征值', Icon: IconMatrix },
-  { path: '/decomposition', label: '矩阵分解', desc: 'LU、LDU、SVD 等', Icon: IconDecompose },
-  { path: '/jordan', label: 'Jordan 标准型', desc: '幂零矩阵法', Icon: IconJordan },
-  { path: '/lambda-smith', label: 'λ-矩阵法', desc: 'Smith 标准型', Icon: IconLambda },
+  { path: '/', label: 'Sturm 序列', Icon: IconSturm },
+  { path: '/matrix-properties', label: '矩阵性质', Icon: IconMatrix },
+  { path: '/decomposition', label: '矩阵分解', Icon: IconDecompose },
+  { path: '/jordan', label: 'Jordan 标准型', Icon: IconJordan },
+  { path: '/lambda-smith', label: 'λ-矩阵法', Icon: IconLambda },
 ];
 
 function DisplayPrecisionControl() {
@@ -46,51 +46,34 @@ function DisplayPrecisionControl() {
   );
 }
 
-function Sidebar() {
+function AppToolbar() {
   return (
-    <aside className="sidebar" aria-label="主导航">
-      <div className="sidebar__brand">
-        <div className="sidebar__logo">LA</div>
+    <header className="app-toolbar">
+      <div className="app-toolbar__brand glass-pill">
+        <div className="app-toolbar__logo">LA</div>
         <div>
-          <h1 className="sidebar__title">Linear Algebra</h1>
-          <p className="sidebar__tagline text-muted">符号计算工作台</p>
+          <span className="app-toolbar__title">Linear Algebra</span>
+          <p className="app-toolbar__subtitle text-muted">符号计算工作台</p>
         </div>
       </div>
-      <nav className="sidebar__nav" aria-label="页面导航">
-        {navItems.map(({ path, label, desc, Icon }) => (
-          <NavLink
-            key={path}
-            to={path}
-            end={path === '/'}
-            className={({ isActive }) => `sidebar__link${isActive ? ' is-active' : ''}`}
-          >
-            <span className="sidebar__link-icon" aria-hidden><Icon /></span>
-            <span className="sidebar__link-text">
-              <span className="sidebar__link-label">{label}</span>
-              <span className="sidebar__link-desc">{desc}</span>
-            </span>
-          </NavLink>
-        ))}
+
+      <nav className="feature-nav" aria-label="功能选择">
+        <div className="feature-nav__pill glass-pill">
+          {navItems.map(({ path, label, Icon }) => (
+            <NavLink
+              key={path}
+              to={path}
+              end={path === '/'}
+              className={({ isActive }) => `feature-nav__tab${isActive ? ' is-active' : ''}`}
+            >
+              <Icon aria-hidden />
+              <span>{label}</span>
+            </NavLink>
+          ))}
+        </div>
       </nav>
-      <div className="sidebar__footer text-muted">SymPy · MathJax · React</div>
-    </aside>
-  );
-}
 
-function Topbar() {
-  const location = useLocation();
-  const current = navItems.find((item) => (
-    item.path === '/'
-      ? location.pathname === '/'
-      : location.pathname.startsWith(item.path)
-  ));
-
-  return (
-    <header className="topbar">
-      <div className="topbar__leading">
-        <h2 className="topbar__title">{current?.label}</h2>
-      </div>
-      <div className="topbar__trailing">
+      <div className="app-toolbar__utility glass-pill">
         <DisplayPrecisionControl />
       </div>
     </header>
@@ -116,9 +99,8 @@ export default function App() {
   return (
     <DisplayPrecisionProvider>
       <div className="app">
-        <Sidebar />
-        <div className="app-content">
-          <Topbar />
+        <div className="app-shell">
+          <AppToolbar />
           <AppRoutes />
         </div>
       </div>

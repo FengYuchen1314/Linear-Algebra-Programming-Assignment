@@ -64,8 +64,9 @@ export default function JordanPage() {
         </ActionPanel>
       </WorkflowSection>
 
-      {result && (
-        <ResultsSection>
+      <ResultsSection>
+        {result && (
+          <>
           <ErrorBlock errors={result.errors} />
           <WarningBlock warnings={result.warnings} />
           {result.success && r && (
@@ -124,8 +125,9 @@ export default function JordanPage() {
               <StepBlock steps={result.steps} />
             </>
           )}
-        </ResultsSection>
-      )}
+          </>
+          )}
+      </ResultsSection>
     </PageLayout>
   );
 }

@@ -23,11 +23,17 @@ export function ActionPanel({ title = '分析参数', children }) {
   );
 }
 
-export function ResultsSection({ children }) {
+export function ResultsSection({ children, placeholder = '选择输入并点击分析后，结果将显示在此处。' }) {
+  const hasContent = children != null && children !== false;
+
   return (
     <section className="results-section">
       <h2 className="text-h2 results-section-title">分析结果</h2>
-      <div className="results">{children}</div>
+      <div className="results">
+        {hasContent ? children : (
+          <p className="results-empty text-muted">{placeholder}</p>
+        )}
+      </div>
     </section>
   );
 }
