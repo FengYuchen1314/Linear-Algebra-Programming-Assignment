@@ -146,5 +146,5 @@ def exact_matrix_max_abs(expr_mat):
         simplified = expr_mat.applyfunc(lambda x: sp.nsimplify(x, rational=True))
         if simplified.is_zero_matrix:
             return 0
-        return format_number(max(abs(float(x.evalf())) for x in simplified))
+        return format_number(max(abs(complex(x.evalf())) for x in simplified))
     return format_number(0)

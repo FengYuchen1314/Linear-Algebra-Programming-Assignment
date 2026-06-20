@@ -121,7 +121,11 @@ def compute_lambda_smith(A):
             inv_idx += 1
         det_factors[f"D_{k}"] = str(product)
 
-    P, J = sm.jordan_form()
+    if any(not e.is_real for e in sm.eigenvals()):
+        warnings.append("矩阵存在复特征值，Jordan 标准型采用数值近似")
+        P, J = sp.Matrix(A.tolist()).jordan_form()
+    else:
+        P, J = sm.jordan_form()
 
     steps.append({
         "title": "不变因子",

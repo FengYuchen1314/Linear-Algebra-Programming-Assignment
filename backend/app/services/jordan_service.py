@@ -1,11 +1,57 @@
 """Jordan normal form via nilpotent matrix method."""
 
+import numpy as np
 import sympy as sp
 
-from app.utils.formatter import format_number, matrix_to_list, matrix_to_latex, exact_matrix_max_abs, to_exact_matrix
+from app.utils.formatter import (
+    format_number,
+    matrix_to_list,
+    matrix_to_latex,
+    exact_matrix_max_abs,
+    to_exact_matrix,
+)
 from app.utils.latex import latex_matrix
 
 lam = sp.Symbol("lambda")
+
+
+def _round_complex(z, ndigits=6):
+    z = complex(z)
+    re = round(z.real, ndigits)
+    im = round(z.imag, ndigits)
+    return re if abs(im) < 1e-9 else complex(re, im)
+
+
+def _numeric_matrix_to_list(M):
+    """Format a (possibly complex) numeric SymPy matrix without rationalizing."""
+    return [[format_number(_round_complex(M[i, j])) for j in range(M.cols)] for i in range(M.rows)]
+
+
+def _numeric_dim_ker_table(A_np, ev_num, alg_mult, n, tol=1e-6):
+    """dim ker(B^k) table computed via numerically-stable matrix ranks."""
+    B = A_np - ev_num * np.eye(n, dtype=complex)
+    table = []
+    d_prev = 0
+    k = 0
+    while True:
+        d_k = 0 if k == 0 else n - int(np.linalg.matrix_rank(np.linalg.matrix_power(B, k), tol=tol))
+        diff = d_k - d_prev
+        block_info = ""
+        if k >= 1:
+            if d_k < alg_mult:
+                d_next = n - int(np.linalg.matrix_rank(np.linalg.matrix_power(B, k + 1), tol=tol))
+            else:
+                d_next = d_k
+            num_blocks = 2 * d_k - d_prev - d_next
+            block_info = f"至少大小 {k} 的块: {diff}, 恰好大小 {k} 的块: {num_blocks}"
+        table.append({"k": k, "dim_ker_Bk": d_k, "dk_diff": diff, "jordan_block_info": block_info})
+        if d_k >= alg_mult:
+            break
+        d_prev = d_k
+        k += 1
+        if k > alg_mult + 2:
+            break
+    return table
 
 
 def _nullity(B, k):
@@ -71,10 +117,24 @@ def compute_jordan(A):
     char_poly = sm.charpoly()
     eigenvals = sm.eigenvals()
 
+    # Exact symbolic computation is fast for real spectra (rational or
+    # irrational), but explodes for complex eigenvalues (nested radicals with i).
+    # Fall back to a numeric matrix in that case to stay responsive.
+    numeric = any(not ev.is_real for ev in eigenvals)
+    if numeric:
+        warnings.append("矩阵存在复特征值，已改用数值方法近似计算 Jordan 标准型，结果为近似值")
+        sm_calc = sp.Matrix(A.tolist())
+        eigenvals = sm_calc.eigenvals()
+    else:
+        sm_calc = sm
+
+    def _ev_latex(value):
+        return format_number_latex(format_number(value)) if numeric else sp.latex(value)
+
     steps.append({
         "title": "特征多项式",
         "content": str(char_poly.as_expr()),
-        "latex": sp.latex(char_poly.as_expr()),
+        "latex": f"\\det(\\lambda I - A) = {sp.latex(char_poly.as_expr())}",
     })
 
     eigen_analysis = []
@@ -82,10 +142,10 @@ def compute_jordan(A):
     max_nilpotent_index = 0
 
     for ev, alg_mult in eigenvals.items():
-        ev_latex = sp.latex(ev)
-        B = sm - ev * sp.eye(n)
+        ev_latex = _ev_latex(ev)
+        B = sm_calc - ev * sp.eye(n)
         geo_mult = len(B.nullspace())
-        table, B_mat = _dim_ker_powers(sm, ev, alg_mult)
+        table, B_mat = _dim_ker_powers(sm_calc, ev, alg_mult)
         nil_index = max((row["k"] for row in table if row["dim_ker_Bk"] >= alg_mult), default=alg_mult)
         max_nilpotent_index = max(max_nilpotent_index, nil_index)
 
@@ -112,18 +172,15 @@ def compute_jordan(A):
             ),
         })
 
-    P, J = sm.jordan_form()
+    P, J = sm_calc.jordan_form()
     P_inv = P.inv()
 
-    verify = (P_inv * sm * P - J).applyfunc(lambda x: sp.nsimplify(x, rational=True))
+    verify = (P_inv * sm_calc * P - J).applyfunc(lambda x: sp.nsimplify(x, rational=True))
     max_err = exact_matrix_max_abs(verify)
-
-    if any(abs(complex(ev.evalf()).imag) > 1e-10 for ev in eigenvals):
-        warnings.append("Jordan 标准型默认在复数域上讨论；输入矩阵为实矩阵，特征值可能为复数")
 
     jordan_chains = []
     for ev in eigenvals:
-        B = sm - ev * sp.eye(n)
+        B = sm_calc - ev * sp.eye(n)
         chain_vecs = B.nullspace()
         if chain_vecs:
             jordan_chains.append({

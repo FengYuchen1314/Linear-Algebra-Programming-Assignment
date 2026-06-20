@@ -6,24 +6,33 @@ from app.utils.formatter import format_number, matrix_to_list, exact_matrix_max_
 from app.utils.latex import latex_matrix
 
 
-def _eigenvalue_analysis(sm):
+def _eigenvalue_analysis(sm, A):
     n = sm.rows
     char_poly = sm.charpoly()
     eigenvals = sm.eigenvals()
+    warnings = []
+    numeric = any(not lam.is_real for lam in eigenvals)
+    if numeric:
+        warnings.append("矩阵存在复特征值，特征值分析采用数值近似")
+        sm_calc = sp.Matrix(A.tolist())
+        eigenvals = sm_calc.eigenvals()
+    else:
+        sm_calc = sm
     analysis = []
     for lam, alg_mult in eigenvals.items():
-        B = sm - lam * sp.eye(n)
+        B = sm_calc - lam * sp.eye(n)
         geo_mult = len(B.nullspace())
+        lam_latex = format_number_latex(format_number(lam)) if numeric else sp.latex(lam)
         analysis.append({
             "eigenvalue": format_number(lam),
-            "eigenvalue_latex": sp.latex(lam),
+            "eigenvalue_latex": lam_latex,
             "algebraic_multiplicity": alg_mult,
             "geometric_multiplicity": geo_mult,
         })
     total_geo = sum(a["geometric_multiplicity"] for a in analysis)
     is_diag = total_geo == n
     reason = "每个特征值的几何重数等于代数重数" if is_diag else "存在特征值的几何重数小于代数重数"
-    return char_poly, analysis, is_diag, reason
+    return char_poly, analysis, is_diag, reason, warnings
 
 
 def compute_properties(A):
@@ -72,7 +81,8 @@ def compute_properties(A):
             result["inverse"] = None
             steps.append({"title": "不可逆", "content": "det(A)=0，矩阵不可逆", "latex": "\\det(A)=0"})
 
-        char_poly, eigen_analysis, is_diag, reason = _eigenvalue_analysis(sm)
+        char_poly, eigen_analysis, is_diag, reason, eig_warnings = _eigenvalue_analysis(sm, A)
+        warnings.extend(eig_warnings)
         result["characteristic_polynomial"] = str(char_poly.as_expr())
         result["characteristic_polynomial_latex"] = sp.latex(char_poly.as_expr())
         result["eigenvalues"] = eigen_analysis
