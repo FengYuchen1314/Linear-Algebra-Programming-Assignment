@@ -1,8 +1,9 @@
 """Matrix basic properties computation."""
 
+import numpy as np
 import sympy as sp
 
-from app.utils.formatter import format_number, matrix_to_list, exact_matrix_max_abs, format_number_latex, to_exact_matrix
+from app.utils.formatter import format_number, matrix_to_list, exact_matrix_max_abs, format_number_latex, to_exact_matrix, round_complex
 from app.utils.latex import latex_matrix
 
 
@@ -11,21 +12,23 @@ def _eigenvalue_analysis(sm, A):
     char_poly = sm.charpoly()
     eigenvals = sm.eigenvals()
     warnings = []
-    numeric = any(not lam.is_real for lam in eigenvals)
-    if numeric:
-        warnings.append("矩阵存在复特征值，特征值分析采用数值近似")
-        sm_calc = sp.Matrix(A.tolist())
-        eigenvals = sm_calc.eigenvals()
-    else:
-        sm_calc = sm
+    complex_spectrum = any(not lam.is_real for lam in eigenvals)
+    A_np = np.array(A, dtype=complex) if complex_spectrum else None
+    if complex_spectrum:
+        warnings.append("矩阵存在复特征值，几何重数采用数值方法计算")
     analysis = []
-    for lam, alg_mult in eigenvals.items():
-        B = sm_calc - lam * sp.eye(n)
-        geo_mult = len(B.nullspace())
-        lam_latex = format_number_latex(format_number(lam)) if numeric else sp.latex(lam)
+    for ev, alg_mult in eigenvals.items():
+        ev_latex = sp.latex(ev)
+        if complex_spectrum:
+            ev_num = complex(ev.evalf())
+            geo_mult = n - int(np.linalg.matrix_rank(A_np - ev_num * np.eye(n, dtype=complex), tol=1e-6))
+            ev_value = format_number(round_complex(ev_num))
+        else:
+            geo_mult = len((sm - ev * sp.eye(n)).nullspace())
+            ev_value = format_number(ev)
         analysis.append({
-            "eigenvalue": format_number(lam),
-            "eigenvalue_latex": lam_latex,
+            "eigenvalue": ev_value,
+            "eigenvalue_latex": ev_latex,
             "algebraic_multiplicity": alg_mult,
             "geometric_multiplicity": geo_mult,
         })

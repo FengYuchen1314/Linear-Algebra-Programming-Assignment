@@ -15,6 +15,14 @@ def _nsimplify_expr(val):
     return val
 
 
+def round_complex(z, ndigits=6):
+    """Round a (possibly complex) number; collapse to real if imag ~ 0."""
+    z = complex(z)
+    re = round(z.real, ndigits)
+    im = round(z.imag, ndigits)
+    return re if abs(im) < 1e-9 else complex(re, im)
+
+
 def to_exact_matrix(arr):
     """Build an exact (rational) SymPy matrix from a float numpy array/list.
 
