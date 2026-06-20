@@ -15,6 +15,22 @@ def _nsimplify_expr(val):
     return val
 
 
+def eigenvalue_display(ev):
+    """Return (numeric_value, latex) for a SymPy eigenvalue.
+
+    Rationals stay exact; "nice" closed-form values (radicals, i) keep their
+    exact LaTeX; CRootOf / opaque roots fall back to a rounded decimal so the
+    UI never shows \\operatorname{CRootOf}(...).
+    """
+    if ev.is_rational:
+        return format_number(ev), sp.latex(ev)
+    num = round_complex(complex(ev.evalf()))
+    value = format_number(num)
+    nice = bool(ev.is_number) and not ev.has(sp.CRootOf)
+    latex = sp.latex(ev) if nice else format_number_latex(value)
+    return value, latex
+
+
 def round_complex(z, ndigits=6):
     """Round a (possibly complex) number; collapse to real if imag ~ 0."""
     z = complex(z)

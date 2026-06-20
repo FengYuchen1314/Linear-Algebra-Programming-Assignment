@@ -128,9 +128,11 @@ def ldu_decomposition(A):
         }, steps
 
     D = sp.diag(*diag_elems)
+    # U = D · U1 with U1 unit upper-triangular, so divide each row by its pivot.
     U1 = U.copy()
     for i in range(U1.rows):
-        U1[i, i] = 1
+        for j in range(U1.cols):
+            U1[i, j] = U1[i, j] / diag_elems[i]
 
     LDU = L * D * U1
     PA = P * sm

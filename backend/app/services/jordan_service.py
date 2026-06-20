@@ -9,6 +9,7 @@ from app.utils.formatter import (
     exact_matrix_max_abs,
     to_exact_matrix,
     round_complex,
+    eigenvalue_display,
 )
 from app.utils.latex import latex_matrix
 
@@ -110,14 +111,15 @@ def compute_jordan(A):
     char_poly = sm.charpoly()
     eigenvals = sm.eigenvals()
 
-    # Exact symbolic computation is fast for real spectra (rational or
-    # irrational), but explodes for complex eigenvalues (nested radicals with i).
-    # For complex spectra we keep the exact eigenvalues for display and use
-    # numerically-stable ranks / numeric Jordan form for the structural parts.
-    complex_spectrum = any(not ev.is_real for ev in eigenvals)
-    A_np = np.array(A, dtype=complex) if complex_spectrum else None
-    if complex_spectrum:
-        warnings.append("矩阵存在复特征值，结构计算采用数值方法，Jordan 标准型为近似结果")
+    # Exact symbolic structure (null spaces of B^k, Jordan form) is only fast
+    # and reliable when the eigenvalues are rational. Irrational/complex roots
+    # (radicals, CRootOf) make SymPy explode, so we switch to numerically-stable
+    # ranks and a numeric Jordan form there. Exact eigenvalues are still used for
+    # display where they are "nice".
+    use_numeric = not all(ev.is_rational for ev in eigenvals)
+    A_np = np.array(A, dtype=complex) if use_numeric else None
+    if use_numeric:
+        warnings.append("矩阵特征值非有理数，结构计算采用数值方法，Jordan 标准型为近似结果")
 
     steps.append({
         "title": "特征多项式",
