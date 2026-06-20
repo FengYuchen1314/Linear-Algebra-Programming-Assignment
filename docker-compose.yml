@@ -3,6 +3,8 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
+      args:
+        PIP_INDEX: ${PIP_INDEX:-https://mirrors.tuna.tsinghua.edu.cn/pypi/web/simple}
     container_name: la-backend
     env_file:
       - ./.env

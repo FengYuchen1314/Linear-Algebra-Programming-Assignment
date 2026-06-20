@@ -6,17 +6,10 @@ backend/**/__pycache__/
 *.egg-info/
 .pytest_cache/
 
-# Secrets / environment
-.env
-.env.local
-.env.*.local
-backend/.env
-**/.env
-!**/.env.example
-
 # Frontend
 frontend/node_modules/
 frontend/dist/
+frontend/public/mathjax/
 
 # OS / editor
 .DS_Store
