@@ -6,7 +6,7 @@ from sympy.polys.domains import QQ
 from sympy.polys.matrices import DomainMatrix
 from sympy.polys.matrices.normalforms import smith_normal_form, invariant_factors
 
-from app.utils.formatter import format_number, matrix_to_list, to_exact_matrix, round_complex, poly_to_latex
+from app.utils.formatter import format_number, matrix_to_list, to_exact_matrix, round_complex, poly_to_latex, poly_to_str
 from app.utils.latex import latex_matrix
 from app.services.jordan_service import _numeric_jordan
 
@@ -119,16 +119,20 @@ def compute_lambda_smith(A):
     min_poly = non_trivial[-1] if non_trivial else char_poly.as_expr()
     is_diag = all(sp.degree(f, lam) == 1 for f in non_trivial)
 
-    det_factors = {}
-    D_prev = sp.Integer(1)
-    det_factors["D_0"] = "1"
+    det_factor_exprs = {"D_0": sp.Integer(1)}
     product = sp.Integer(1)
     inv_idx = 0
     for k in range(1, n + 1):
         if inv_idx < len(inv_exprs):
             product = sp.expand(product * inv_exprs[inv_idx])
             inv_idx += 1
-        det_factors[f"D_{k}"] = str(product)
+        det_factor_exprs[f"D_{k}"] = product
+
+    det_factors = {k: poly_to_str(v) for k, v in det_factor_exprs.items()}
+    det_factors_latex = {
+        k: poly_to_latex(v) if v not in (0, 1, sp.Integer(0), sp.Integer(1)) else str(v)
+        for k, v in det_factor_exprs.items()
+    }
 
     eigenvals = sm.eigenvals()
     if not all(e.is_rational for e in eigenvals):
@@ -141,10 +145,6 @@ def compute_lambda_smith(A):
         jordan_J_list = matrix_to_list(J)
 
     inv_latex = [poly_to_latex(f) for f in inv_exprs]
-    det_factors_latex = {
-        k: poly_to_latex(sp.sympify(v)) if v not in ("0", "1") else v
-        for k, v in det_factors.items()
-    }
 
     steps.append({
         "title": "不变因子",

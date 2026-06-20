@@ -64,40 +64,54 @@ def lu_decomposition(A):
         P = sp.eye(n)
         if perm:
             P = P.permute_rows(perm)
-        needs_perm = perm is not None and list(perm) != list(range(n))
+        needs_perm = not P.equals(sp.eye(n))
 
-        steps.append({
-            "title": "PLU 分解",
-            "content": f"{'需要' if needs_perm else '不需要'}行交换",
-            "latex": f"P={latex_matrix(P.tolist())},\\quad L={latex_matrix(L.tolist())},\\quad U={latex_matrix(U.tolist())}",
-        })
+        if needs_perm:
+            steps.append({
+                "title": "PLU 分解",
+                "content": "需要行交换",
+                "latex": f"P={latex_matrix(P.tolist())},\\quad L={latex_matrix(L.tolist())},\\quad U={latex_matrix(U.tolist())}",
+            })
+        else:
+            steps.append({
+                "title": "LU 分解",
+                "content": "顺序主子式非零，无需行交换",
+                "latex": f"L={latex_matrix(L.tolist())},\\quad U={latex_matrix(U.tolist())}",
+            })
 
-        PA = P * sm
+        lhs = P * sm if needs_perm else sm
         LU = L * U
-        error = PA - LU
+        error = lhs - LU
         err = exact_matrix_max_abs(error)
 
         result = {
             "needs_permutation": needs_perm,
             "can_plain_lu": not needs_perm,
-            "P": matrix_to_list(P),
             "L": matrix_to_list(L),
             "U": matrix_to_list(U),
-            "verification_PA_equals_LU": err,
+            "verification_error": err,
             "verification_exact": err == 0,
         }
+        if needs_perm:
+            result["P"] = matrix_to_list(P)
 
-        if not needs_perm:
-            result["plain_lu"] = {"L": matrix_to_list(L), "U": matrix_to_list(U)}
+        if needs_perm:
+            steps.append({
+                "title": "分解结果",
+                "latex": f"P={latex_matrix(P.tolist())},\\quad L={latex_matrix(L.tolist())},\\quad U={latex_matrix(U.tolist())}",
+            })
+        else:
+            steps.append({
+                "title": "分解结果",
+                "latex": f"L={latex_matrix(L.tolist())},\\quad U={latex_matrix(U.tolist())}",
+            })
 
+        verify_title = "验证 PA=LU" if needs_perm else "验证 A=LU"
+        verify_lhs = "PA" if needs_perm else "A"
         steps.append({
-            "title": "分解结果",
-            "latex": f"P={latex_matrix(P.tolist())},\\quad L={latex_matrix(L.tolist())},\\quad U={latex_matrix(U.tolist())}",
-        })
-        steps.append({
-            "title": "验证 PA=LU",
+            "title": verify_title,
             "content": "恒等" if err == 0 else f"最大误差: {err}",
-            "latex": f"PA-LU={latex_matrix(error.tolist())}",
+            "latex": f"{verify_lhs}-LU={latex_matrix(error.tolist())}",
         })
 
         return result, steps
@@ -115,18 +129,21 @@ def ldu_decomposition(A):
 
     L = sp.Matrix(lu_result["L"])
     U = sp.Matrix(lu_result["U"])
-    P = sp.Matrix(lu_result["P"])
     sm = to_exact_matrix(A)
+    needs_perm = lu_result.get("needs_permutation", False)
+    P = sp.Matrix(lu_result["P"]) if needs_perm and lu_result.get("P") else sp.eye(sm.rows)
 
     diag_elems = [U[i, i] for i in range(U.rows)]
     if any(d == 0 for d in diag_elems):
-        return {
+        fail = {
             "success": False,
             "reason": "U 的对角元素存在零，无法进行 LDU 分解",
-            "P": lu_result["P"],
             "L": lu_result["L"],
             "U": lu_result["U"],
-        }, steps
+        }
+        if needs_perm:
+            fail["P"] = lu_result["P"]
+        return fail, steps
 
     D = sp.diag(*diag_elems)
     # U = D · U1 with U1 unit upper-triangular, so divide each row by its pivot.
@@ -136,30 +153,33 @@ def ldu_decomposition(A):
             U1[i, j] = U1[i, j] / diag_elems[i]
 
     LDU = L * D * U1
-    PA = P * sm
-    error = PA - LDU
+    lhs = P * sm if needs_perm else sm
+    error = lhs - LDU
     err = exact_matrix_max_abs(error)
 
     result = {
         "success": True,
-        "needs_permutation": lu_result["needs_permutation"],
-        "P": lu_result["P"],
+        "needs_permutation": needs_perm,
         "L": lu_result["L"],
         "D": matrix_to_list(D),
         "U1": matrix_to_list(U1),
         "verification_error": err,
         "verification_exact": err == 0,
     }
+    if needs_perm:
+        result["P"] = lu_result["P"]
 
     steps.append({
         "title": "LDU 分解",
         "content": "U = D·U₁，其中 U₁ 为单位上三角矩阵",
         "latex": f"D={latex_matrix(D.tolist())},\\quad U_1={latex_matrix(U1.tolist())}",
     })
+    verify_title = "验证 PA=LDU" if needs_perm else "验证 A=LDU"
+    verify_lhs = "PA" if needs_perm else "A"
     steps.append({
-        "title": "验证 PA=LDU",
+        "title": verify_title,
         "content": "恒等" if err == 0 else f"最大误差: {err}",
-        "latex": f"PA-LDU={latex_matrix(error.tolist())}",
+        "latex": f"{verify_lhs}-LDU={latex_matrix(error.tolist())}",
     })
 
     return result, steps

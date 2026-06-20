@@ -84,6 +84,8 @@ def format_number(val):
             if abs(im_num) < 1e-10:
                 return re_fmt
             return {"re": re_fmt, "im": im_fmt, "latex": sp.latex(val)}
+        if val.free_symbols:
+            return {"latex": sp.latex(sp.expand(val))}
         return str(val)
 
     if isinstance(val, (int, np.integer)):

@@ -5,6 +5,9 @@ import MathLine from '../components/MathLine';
 import ResultBlock from '../components/ResultBlock';
 import StepBlock from '../components/StepBlock';
 import ErrorBlock, { WarningBlock } from '../components/ErrorBlock';
+import PageLayout, { ActionPanel, ResultsSection } from '../components/ui/PageLayout';
+import Button from '../components/ui/Button';
+import { IconCompute } from '../components/ui/Icons';
 import { valueToLatex, numberToLatex } from '../utils/latex';
 
 const DECOMP_TYPES = [
@@ -38,25 +41,33 @@ export default function DecompositionPage() {
   const r = result?.result;
 
   return (
-    <div className="page">
-      <h2>矩阵的各种分解</h2>
+    <PageLayout
+      title="矩阵分解"
+      description="满秩分解、LU/PLU、LDU 与奇异值分解，含分解验证。"
+    >
       <MatrixSourceSelector onSelect={setSelected} selected={selected} />
 
-      <div className="decomp-selector">
-        <label>分解类型：</label>
-        <select value={decompType} onChange={(e) => setDecompType(e.target.value)}>
-          {DECOMP_TYPES.map((d) => (
-            <option key={d.key} value={d.key}>{d.label}</option>
-          ))}
-        </select>
-      </div>
-
-      <button className="compute-btn" onClick={handleCompute} disabled={!selected || loading}>
-        {loading ? '计算中...' : '开始分解'}
-      </button>
+      <ActionPanel>
+        <div className="decomp-selector">
+          <label htmlFor="decomp-type">分解类型</label>
+          <select id="decomp-type" value={decompType} onChange={(e) => setDecompType(e.target.value)}>
+            {DECOMP_TYPES.map((d) => (
+              <option key={d.key} value={d.key}>{d.label}</option>
+            ))}
+          </select>
+        </div>
+        <Button
+          icon={<IconCompute />}
+          loading={loading}
+          onClick={handleCompute}
+          disabled={!selected}
+        >
+          开始分解
+        </Button>
+      </ActionPanel>
 
       {result && (
-        <div className="results">
+        <ResultsSection>
           <ErrorBlock errors={result.errors} />
           <WarningBlock warnings={result.warnings} />
           {result.success && r && (
@@ -66,6 +77,12 @@ export default function DecompositionPage() {
               </ResultBlock>
               <ResultBlock title="分解结果">
                 {r.rank != null && <MathLine tex={`\\mathrm{rank}(A)=${r.rank}`} />}
+                {r.needs_permutation != null && decompType === 'lu' && (
+                  <MathLine tex={r.needs_permutation ? 'PA = LU' : 'A = LU'} />
+                )}
+                {r.needs_permutation != null && decompType === 'ldu' && r.success !== false && (
+                  <MathLine tex={r.needs_permutation ? 'PA = LDU' : 'A = LDU'} />
+                )}
                 {r.B && <MatrixPreview matrix={r.B} label="B" />}
                 {r.C && <MatrixPreview matrix={r.C} label="C" />}
                 {r.P && <MatrixPreview matrix={r.P} label="P" />}
@@ -89,8 +106,8 @@ export default function DecompositionPage() {
               <StepBlock steps={result.steps} />
             </>
           )}
-        </div>
+        </ResultsSection>
       )}
-    </div>
+    </PageLayout>
   );
 }

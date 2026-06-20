@@ -6,6 +6,9 @@ import MathLine from '../components/MathLine';
 import ResultBlock from '../components/ResultBlock';
 import StepBlock from '../components/StepBlock';
 import ErrorBlock, { WarningBlock } from '../components/ErrorBlock';
+import PageLayout, { ActionPanel, ResultsSection } from '../components/ui/PageLayout';
+import Button from '../components/ui/Button';
+import { IconCompute } from '../components/ui/Icons';
 import { eigenvalueLineLatex } from '../utils/latex';
 
 export default function MatrixPropertiesPage() {
@@ -29,15 +32,25 @@ export default function MatrixPropertiesPage() {
   const r = result?.result;
 
   return (
-    <div className="page">
-      <h2>矩阵基本性质判断</h2>
+    <PageLayout
+      title="矩阵基本性质"
+      description="分析矩阵的秩、行列式、迹、可逆性、特征值与可对角化性。"
+    >
       <MatrixSourceSelector onSelect={setSelected} selected={selected} />
-      <button className="compute-btn" onClick={handleCompute} disabled={!selected || loading}>
-        {loading ? '计算中...' : '分析矩阵性质'}
-      </button>
+
+      <ActionPanel>
+        <Button
+          icon={<IconCompute />}
+          loading={loading}
+          onClick={handleCompute}
+          disabled={!selected}
+        >
+          分析矩阵性质
+        </Button>
+      </ActionPanel>
 
       {result && (
-        <div className="results">
+        <ResultsSection>
           <ErrorBlock errors={result.errors} />
           <WarningBlock warnings={result.warnings} />
           {result.success && r && (
@@ -76,8 +89,8 @@ export default function MatrixPropertiesPage() {
               <StepBlock steps={result.steps} />
             </>
           )}
-        </div>
+        </ResultsSection>
       )}
-    </div>
+    </PageLayout>
   );
 }

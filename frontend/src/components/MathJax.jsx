@@ -1,4 +1,6 @@
 import { useEffect, useRef } from 'react';
+import { useDisplayPrecision } from '../context/DisplayPrecisionContext';
+import { applyDisplayPrecisionToLatex } from '../utils/displayPrecision';
 
 function waitForMathJax() {
   if (window.MathJax?.typesetPromise) {
@@ -14,14 +16,16 @@ function waitForMathJax() {
   });
 }
 
-export default function MathJaxDisplay({ tex, inline = false, className = '' }) {
+export default function MathJaxDisplay({ tex, inline = false, className = '', formatNumeric = true }) {
   const ref = useRef(null);
+  const { precision } = useDisplayPrecision();
+  const displayTex = formatNumeric ? applyDisplayPrecisionToLatex(tex, precision) : tex;
 
   useEffect(() => {
     const node = ref.current;
-    if (!node || tex == null || tex === '') return undefined;
+    if (!node || displayTex == null || displayTex === '') return undefined;
 
-    node.textContent = inline ? `\\(${tex}\\)` : `\\[${tex}\\]`;
+    node.textContent = inline ? `\\(${displayTex}\\)` : `\\[${displayTex}\\]`;
 
     let cancelled = false;
     waitForMathJax().then(() => {
@@ -35,9 +39,9 @@ export default function MathJaxDisplay({ tex, inline = false, className = '' }) 
     return () => {
       cancelled = true;
     };
-  }, [tex, inline]);
+  }, [displayTex, inline, precision]);
 
-  if (tex == null || tex === '') return null;
+  if (displayTex == null || displayTex === '') return null;
 
   const Tag = inline ? 'span' : 'div';
   const modeClass = inline ? 'mathjax-inline' : 'mathjax-display';

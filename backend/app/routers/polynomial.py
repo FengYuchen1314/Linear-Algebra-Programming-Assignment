@@ -19,6 +19,7 @@ class SturmRequest(BaseModel):
     source: str
     polynomial_id: Optional[str] = None
     requirement: Optional[str] = None
+    precision: float = 0.01
 
 
 @router.post("/sturm")
@@ -27,7 +28,7 @@ async def sturm_roots(req: SturmRequest):
         expr, input_data, resolve_warnings = await resolve_polynomial(
             req.source, req.polynomial_id, req.requirement
         )
-        result, steps, warnings = compute_sturm(expr)
+        result, steps, warnings = compute_sturm(expr, precision=req.precision)
         warnings = resolve_warnings + warnings
         return success_response(
             result=result,

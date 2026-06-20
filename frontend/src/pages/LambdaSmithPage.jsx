@@ -6,6 +6,9 @@ import MathLine from '../components/MathLine';
 import ResultBlock from '../components/ResultBlock';
 import StepBlock from '../components/StepBlock';
 import ErrorBlock, { WarningBlock } from '../components/ErrorBlock';
+import PageLayout, { ActionPanel, ResultsSection } from '../components/ui/PageLayout';
+import Button from '../components/ui/Button';
+import { IconCompute } from '../components/ui/Icons';
 import { numberToLatex, pickLatex, subscriptLatex } from '../utils/latex';
 
 export default function LambdaSmithPage() {
@@ -29,15 +32,25 @@ export default function LambdaSmithPage() {
   const r = result?.result;
 
   return (
-    <div className="page">
-      <h2>λ-矩阵法与 Smith 标准型</h2>
+    <PageLayout
+      title="λ-矩阵法与 Smith 标准型"
+      description="对 λI−A 做 Smith 分解，求不变因子、初等因子与 Jordan 块。"
+    >
       <MatrixSourceSelector onSelect={setSelected} selected={selected} squareOnly />
-      <button className="compute-btn" onClick={handleCompute} disabled={!selected || loading}>
-        {loading ? '计算中...' : '计算 Smith 标准型'}
-      </button>
+
+      <ActionPanel>
+        <Button
+          icon={<IconCompute />}
+          loading={loading}
+          onClick={handleCompute}
+          disabled={!selected}
+        >
+          计算 Smith 标准型
+        </Button>
+      </ActionPanel>
 
       {result && (
-        <div className="results">
+        <ResultsSection>
           <ErrorBlock errors={result.errors} />
           <WarningBlock warnings={result.warnings} />
           {result.success && r && (
@@ -46,6 +59,7 @@ export default function LambdaSmithPage() {
                 <MatrixPreview matrix={result.matrix} label="A" />
               </ResultBlock>
               <ResultBlock title="特征矩阵 λI − A">
+                <MatrixPreview matrix={r.lambda_I_minus_A} label={'\\lambda I - A'} />
                 <PolynomialPreview
                   expr={r.characteristic_polynomial}
                   latex={r.characteristic_polynomial_latex}
@@ -94,8 +108,8 @@ export default function LambdaSmithPage() {
               <StepBlock steps={result.steps} />
             </>
           )}
-        </div>
+        </ResultsSection>
       )}
-    </div>
+    </PageLayout>
   );
 }

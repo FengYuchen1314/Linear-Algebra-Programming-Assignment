@@ -1,19 +1,26 @@
+import {
+  getDisplayPrecision,
+  formatNumberForDisplay,
+  isExactDisplayValue,
+  displayEigenvalueLatex,
+} from './displayPrecision';
+
 export function formatCell(val) {
   if (val === null || val === undefined) return '0';
   return numberToLatex(val);
 }
 
-export function numberToLatex(val) {
+export function numberToLatex(val, precision = getDisplayPrecision()) {
   if (val === null || val === undefined) return '0';
   if (typeof val === 'object') {
     if (val.latex) return val.latex;
     if ('re' in val || 'im' in val) {
       const re = val.re ?? 0;
       const im = val.im ?? 0;
-      const reTex = numberToLatex(re);
-      const imNum = parseNumber(im);
+      const reTex = numberToLatex(re, precision);
+      const imNum = parseNumber(isExactDisplayValue(im) ? im : formatNumberForDisplay(im, precision));
       if (Math.abs(imNum) < 1e-10) return reTex;
-      const imTex = numberToLatex(Math.abs(imNum));
+      const imTex = numberToLatex(Math.abs(imNum), precision);
       if (Math.abs(parseNumber(re)) < 1e-10) {
         return imNum >= 0 ? `${imTex}\\mathrm{i}` : `-${imTex}\\mathrm{i}`;
       }
@@ -24,7 +31,16 @@ export function numberToLatex(val) {
     const [p, q] = val.split('/');
     return q ? `\\frac{${p}}{${q}}` : val;
   }
-  return String(val);
+  if (typeof val === 'string' && val.includes('\\')) {
+    return val;
+  }
+  if (typeof val === 'string' && (/\blambda\b/.test(val) || /\*\*/.test(val))) {
+    return exprToLatex(val);
+  }
+  if (isExactDisplayValue(val)) {
+    return String(val);
+  }
+  return String(formatNumberForDisplay(val, precision));
 }
 
 export function parseNumber(val) {
@@ -77,7 +93,7 @@ export function intervalToLatex(a, b) {
 }
 
 export function eigenvalueLineLatex(ev) {
-  const lam = ev.eigenvalue_latex || numberToLatex(ev.eigenvalue);
+  const lam = displayEigenvalueLatex(ev);
   return `\\lambda = ${lam},\\ n_a = ${ev.algebraic_multiplicity},\\ n_g = ${ev.geometric_multiplicity}`;
 }
 

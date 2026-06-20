@@ -7,7 +7,7 @@ from app.utils.formatter import format_number, poly_to_str, poly_to_latex
 from app.utils.latex import latex_expr
 from app.utils.errors import ZERO_POLY_MSG
 
-PRECISION = 1e-8
+DEFAULT_PRECISION = 0.01
 ROOT_TOL = 1e-10
 INTERIOR_OFFSET = 1e-8
 
@@ -159,18 +159,18 @@ def _isolate_roots(f, sequence, left, right, intervals, steps):
         _isolate_roots(f, sequence, mid, right, intervals, steps)
 
 
-def _bisect_root(f, left, right):
+def _bisect_root(f, left, right, precision):
     a, b = left, right
-    if abs(a - b) < PRECISION:
+    if abs(a - b) <= precision:
         return (a + b) / 2
     fa = float(sp.N(f.subs(X, a), 15))
     fb = float(sp.N(f.subs(X, b), 15))
     if fa * fb > 0:
         return (a + b) / 2
-    while b - a > PRECISION:
+    while b - a > precision:
         mid = (a + b) / 2
         fm = float(sp.N(f.subs(X, mid), 15))
-        if abs(fm) < PRECISION:
+        if abs(fm) <= precision:
             return mid
         if fa * fm <= 0:
             b = mid
@@ -180,7 +180,9 @@ def _bisect_root(f, left, right):
     return (a + b) / 2
 
 
-def compute_sturm(f_expr):
+def compute_sturm(f_expr, precision=DEFAULT_PRECISION):
+    if precision <= 0:
+        raise ValueError("精度必须为正数")
     steps = []
     warnings = []
 
@@ -241,16 +243,17 @@ def compute_sturm(f_expr):
         if abs(lo - hi) < 1e-14:
             root = lo
         else:
-            root = _bisect_root(work_f, lo, hi)
+            root = _bisect_root(work_f, lo, hi, precision)
         approx_roots.append({
             "interval": [format_number(lo), format_number(hi)],
             "approx_root": format_number(root),
-            "precision": PRECISION,
+            "precision": format_number(precision),
         })
 
     steps.append({
         "title": "近似求根",
-        "content": f"使用二分法，精度 {PRECISION}",
+        "content": f"使用二分法，精度 ε = {precision}",
+        "latex": f"\\text{{二分法精度}}\\ \\varepsilon = {precision}",
     })
 
     return {
@@ -261,6 +264,7 @@ def compute_sturm(f_expr):
         "squarefree_polynomial": poly_to_str(work_f) if has_multiple else None,
         "sturm_sequence": seq_strs,
         "sturm_sequence_latex": seq_latex,
+        "precision": format_number(precision),
         "root_bounds": {"L": format_number(L), "R": format_number(R)},
         "isolated_intervals": [[format_number(a), format_number(b)] for a, b in intervals],
         "approx_roots": approx_roots,

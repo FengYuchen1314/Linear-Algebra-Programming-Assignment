@@ -6,7 +6,11 @@ import MathLine from '../components/MathLine';
 import ResultBlock from '../components/ResultBlock';
 import StepBlock from '../components/StepBlock';
 import ErrorBlock, { WarningBlock } from '../components/ErrorBlock';
+import PageLayout, { ActionPanel, ResultsSection } from '../components/ui/PageLayout';
+import Button from '../components/ui/Button';
+import { IconCompute } from '../components/ui/Icons';
 import { eigenvalueLineLatex, valueToLatex } from '../utils/latex';
+import { displayEigenvalueLatex } from '../utils/displayPrecision';
 
 export default function JordanPage() {
   const [selected, setSelected] = useState(null);
@@ -34,15 +38,25 @@ export default function JordanPage() {
   const r = result?.result;
 
   return (
-    <div className="page">
-      <h2>Jordan 标准型（幂零矩阵法）</h2>
+    <PageLayout
+      title="Jordan 标准型"
+      description="基于幂零矩阵法求 Jordan 块结构，并构造变换矩阵 P。"
+    >
       <MatrixSourceSelector onSelect={setSelected} selected={selected} squareOnly />
-      <button className="compute-btn" onClick={handleCompute} disabled={!selected || loading}>
-        {loading ? '计算中...' : '计算 Jordan 标准型'}
-      </button>
+
+      <ActionPanel>
+        <Button
+          icon={<IconCompute />}
+          loading={loading}
+          onClick={handleCompute}
+          disabled={!selected}
+        >
+          计算 Jordan 标准型
+        </Button>
+      </ActionPanel>
 
       {result && (
-        <div className="results">
+        <ResultsSection>
           <ErrorBlock errors={result.errors} />
           <WarningBlock warnings={result.warnings} />
           {result.success && r && (
@@ -62,29 +76,31 @@ export default function JordanPage() {
               </ResultBlock>
               <ResultBlock title="幂零矩阵分析">
                 {Object.entries(r.nilpotent_tables || {}).map(([lam, data]) => (
-                  <div key={lam}>
-                    <MathLine tex={`\\lambda = ${data.eigenvalue_latex || lam}`} />
+                  <div key={lam} className="nilpotent-section">
+                    <MathLine tex={`\\lambda = ${displayEigenvalueLatex({ eigenvalue: lam, eigenvalue_latex: data.eigenvalue_latex })}`} />
                     <MatrixPreview matrix={data.B_matrix} label={'B = A - \\lambda I'} />
-                    <table className="data-table">
-                      <thead>
-                        <tr>
-                          <th><MathLine inline tex={'k'} /></th>
-                          <th><MathLine inline tex={'\\dim\\ker(B^{k})'} /></th>
-                          <th><MathLine inline tex={'d_k - d_{k-1}'} /></th>
-                          <th>Jordan 块信息</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {data.table?.map((row, i) => (
-                          <tr key={i}>
-                            <td>{row.k}</td>
-                            <td>{row.dim_ker_Bk}</td>
-                            <td>{row.dk_diff}</td>
-                            <td>{row.jordan_block_info}</td>
+                    <div className="data-table-wrap">
+                      <table className="data-table">
+                        <thead>
+                          <tr>
+                            <th><MathLine inline tex={'k'} /></th>
+                            <th><MathLine inline tex={'\\dim\\ker(B^{k})'} /></th>
+                            <th><MathLine inline tex={'d_k - d_{k-1}'} /></th>
+                            <th>Jordan 块信息</th>
                           </tr>
-                        ))}
-                      </tbody>
-                    </table>
+                        </thead>
+                        <tbody>
+                          {data.table?.map((row, i) => (
+                            <tr key={i}>
+                              <td>{row.k}</td>
+                              <td>{row.dim_ker_Bk}</td>
+                              <td>{row.dk_diff}</td>
+                              <td>{row.jordan_block_info}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
                   </div>
                 ))}
               </ResultBlock>
@@ -99,8 +115,8 @@ export default function JordanPage() {
               <StepBlock steps={result.steps} />
             </>
           )}
-        </div>
+        </ResultsSection>
       )}
-    </div>
+    </PageLayout>
   );
 }

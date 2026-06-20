@@ -1,5 +1,5 @@
 import MathJaxDisplay from './MathJax';
-import { exprToLatex, pickLatex } from '../utils/latex';
+import { pickLatex } from '../utils/latex';
 
 export default function PolynomialPreview({ expr, latex, label }) {
   const body = pickLatex(latex, expr);
